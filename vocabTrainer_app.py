@@ -6,7 +6,6 @@ import logging
 import os
 import random
 from pylinkjs.PyLinkJS import run_pylinkjs_app
-from sphinx.config import correct_copyright_year
 
 
 # --------------------------------------------------
@@ -14,12 +13,6 @@ from sphinx.config import correct_copyright_year
 # --------------------------------------------------
 ARGS = {}           # ARGS is filled in in the main
 PANE_IDS = ['']     # PANE_ID is filled in during the ready callback
-QUESTIONS_REMAINING = []
-QUESTIONS_ANSWERED_INCORRECTLY = set()
-CORRECT = None
-REMEDIAL = None
-RUNNING_TOTAL = None
-
 
 
 # --------------------------------------------------
@@ -145,13 +138,6 @@ def _init_pane(jsc, pane_id):
             jsc - jsclient context
             pane_id - id of the pane to initialize
     """
-    # globals
-    global QUESTIONS_REMAINING
-    global QUESTIONS_ANSWERED_INCORRECTLY
-    global CORRECT
-    global RUNNING_TOTAL
-    global REMEDIAL
-
     # pane_quizzes_available
     if pane_id == 'pane_quizzes_available':
         # remove all current quizzes available
@@ -178,15 +164,15 @@ def _init_pane(jsc, pane_id):
         # parse the quiz data
         lines = quiz_data.split('\n')
         random.shuffle(lines)
-        QUESTIONS_REMAINING = []
+        jsc.tag['QUESTIONS_REMAINING'] = []
         for x in lines:
             if not x.strip() == '':
                 f = [xx.strip() for xx in x.split('|')]
-                QUESTIONS_REMAINING.append(list(f))
-        QUESTIONS_ANSWERED_INCORRECTLY = set()
-        CORRECT = 0
-        RUNNING_TOTAL = 0
-        REMEDIAL = 0
+                jsc.tag['QUESTIONS_REMAINING'].append(list(f))
+        jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"] = set()
+        jsc.tag["CORRECT"] = 0
+        jsc.tag["RUNNING_TOTAL"] = 0
+        jsc.tag["REMEDIAL"] = 0
         _next_question(jsc)
 
     # pane_quizzes_available
@@ -199,7 +185,7 @@ def _init_pane(jsc, pane_id):
 
 
 def _next_question(jsc):
-    jsc['#question'].html = QUESTIONS_REMAINING[0][0]
+    jsc['#question'].html = jsc.tag["QUESTIONS_REMAINING"][0][0]
     jsc['#answer'].val= ''
 
     # refresh the progress bar!
@@ -207,19 +193,19 @@ def _next_question(jsc):
 
 
 def _refresh_progress_bar(jsc):
-    pbar_total = CORRECT + len(QUESTIONS_REMAINING) + REMEDIAL
-    jsc['#pbar_correct'].css.width = f'{int(CORRECT * 100 / pbar_total)}%'
-    jsc['#pbar_correct'].html = CORRECT
-    jsc['#pbar_remaining'].css.width = f'{int(len(QUESTIONS_REMAINING) * 100 / pbar_total)}%'
-    jsc['#pbar_remaining'].html = len(QUESTIONS_REMAINING)
-    jsc['#pbar_remedial'].css.width = f'{int(REMEDIAL * 100 / pbar_total)}%'
-    jsc['#pbar_remedial'].html = REMEDIAL
+    pbar_total = jsc.tag["CORRECT"] + len(jsc.tag["QUESTIONS_REMAINING"]) + jsc.tag["REMEDIAL"]
+    jsc['#pbar_correct'].css.width = f'{int(jsc.tag["CORRECT"] * 100 / pbar_total)}%'
+    jsc['#pbar_correct'].html = jsc.tag["CORRECT"]
+    jsc['#pbar_remaining'].css.width = f'{int(len(jsc.tag["QUESTIONS_REMAINING"]) * 100 / pbar_total)}%'
+    jsc['#pbar_remaining'].html = len(jsc.tag["QUESTIONS_REMAINING"])
+    jsc['#pbar_remedial'].css.width = f'{int(jsc.tag["REMEDIAL"] * 100 / pbar_total)}%'
+    jsc['#pbar_remedial'].html = jsc.tag["REMEDIAL"]
 
-    if RUNNING_TOTAL == 0:
+    if jsc.tag["RUNNING_TOTAL"] == 0:
         percentage = '0%'
     else:
-        percentage = f'{int((CORRECT * 100.0 / RUNNING_TOTAL))}%'
-    jsc['#progress_text'].html = f'<h3>{percentage}</h3>Progress ({len(QUESTIONS_REMAINING)} left, {CORRECT} correct, {RUNNING_TOTAL - CORRECT} wrong, {REMEDIAL} remedial)'
+        percentage = f'{int((jsc.tag["CORRECT"] * 100.0 / jsc.tag["RUNNING_TOTAL"]))}%'
+    jsc['#progress_text'].html = f'<h3>{percentage}</h3>Progress ({len(jsc.tag["QUESTIONS_REMAINING"])} left, {jsc.tag["CORRECT"]} correct, {jsc.tag["RUNNING_TOTAL"] - jsc.tag["CORRECT"]} wrong, {jsc.tag["REMEDIAL"]} remedial)'
 
 
 
@@ -297,39 +283,32 @@ def btn_clicked(jsc, btn_id):
 
 
 def check_answer(jsc):
-    # globals
-    global CORRECT
-    global RUNNING_TOTAL
-    global REMEDIAL
-    global QUESTIONS_REMAINING
-    global QUESTIONS_ANSWERED_INCORRECTLY
-
     # get the answer
     user_answer =jsc['#answer'].val
 
     # check if the answer is correct
-    question = QUESTIONS_REMAINING[0][0]
-    answer = QUESTIONS_REMAINING[0][1]
+    question = jsc.tag["QUESTIONS_REMAINING"][0][0]
+    answer = jsc.tag["QUESTIONS_REMAINING"][0][1]
     jsc['#alert'].html = answer
-    if user_answer == QUESTIONS_REMAINING[0][1]:
+    if user_answer == jsc.tag["QUESTIONS_REMAINING"][0][1]:
         # answer is correct!
 
         # hide the alert
         jsc['#alert'].css.visibility = 'hidden'
 
         # delete the question from the QUESTIONS_REMAINING
-        QUESTIONS_REMAINING.pop(0)
+        jsc.tag["QUESTIONS_REMAINING"].pop(0)
 
         # check if this is the first time we have seen this question
-        if question not in QUESTIONS_ANSWERED_INCORRECTLY:
+        if question not in jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"]:
             logging.info('Correct the first time')
-            CORRECT = CORRECT + 1
-            RUNNING_TOTAL = RUNNING_TOTAL + 1
+            jsc.tag["CORRECT"] = jsc.tag["CORRECT"] + 1
+            jsc.tag["RUNNING_TOTAL"] = jsc.tag["RUNNING_TOTAL"] + 1
         else:
             # if there is only one instance of this question, then we can remove it from the remedials LIST
-            if QUESTIONS_REMAINING.count([question, answer]) == 0:
+            if jsc.tag["QUESTIONS_REMAINING"].count([question, answer]) == 0:
                 logging.info('Correct for remedial')
-                REMEDIAL = REMEDIAL - 1
+                jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] - 1
             else:
                 logging.info('Correct for reinforcement')
     else:
@@ -340,23 +319,23 @@ def check_answer(jsc):
         jsc['#alert'].html = f'<h3>Wrong!  {answer}</h3>'
 
         # check if we have answered this question wrong before
-        if question not in QUESTIONS_ANSWERED_INCORRECTLY:
+        if question not in jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"]:
             # first time we have seen this wrong question, so we can increment the total
-            RUNNING_TOTAL = RUNNING_TOTAL + 1
-            REMEDIAL = REMEDIAL + 1
-            logging.info(f'Wrong the first time RUNNING_TOTAL={RUNNING_TOTAL} REMEDIAL={REMEDIAL}')
+            jsc.tag["RUNNING_TOTAL"] = jsc.tag["RUNNING_TOTAL"] + 1
+            jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
+            logging.info(f'Wrong the first time RUNNING_TOTAL={jsc.tag["RUNNING_TOTAL"]} REMEDIAL={jsc.tag["REMEDIAL"]}')
 
         # add this question to the set of questions answered incorrectly
-        QUESTIONS_ANSWERED_INCORRECTLY.add(question)
+        jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"].add(question)
 
         # check if there are 2 of this question already int he QUESTIONS_REMAINING
         # if there are, the user is bombing this question so keep asking until they get it right
-        if QUESTIONS_REMAINING.count([question, answer]) < 2:
+        if jsc.tag["QUESTIONS_REMAINING"].count([question, answer]) < 2:
             logging.info('Wrong for remedial')
             # randomize the QUESTIONS_REMAINING so the wrong question will be asked again
-            random.shuffle(QUESTIONS_REMAINING)
+            random.shuffle(jsc.tag["QUESTIONS_REMAINING"])
             # add a duplicate of this question as the next question to reinforce
-            QUESTIONS_REMAINING.insert(0, [question, answer])
+            jsc.tag["QUESTIONS_REMAINING"].insert(0, [question, answer])
         else:
             logging.info('Wrong for reinforcement')
 
@@ -365,16 +344,12 @@ def check_answer(jsc):
     _refresh_progress_bar(jsc)
 
     # check if we are done
-    if len(QUESTIONS_REMAINING) != 0:
+    if len(jsc.tag["QUESTIONS_REMAINING"]) != 0:
         _next_question(jsc)
     else:
         jsc['#QuestionAndAnswer'].css.display = 'none'
         jsc['#QuestionsFinished'].css.display = 'block'
-        jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((CORRECT * 100.0 / RUNNING_TOTAL))}%"
-
-    # duno
-    for x in QUESTIONS_REMAINING:
-        logging.info(x)
+        jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((jsc.tag['CORRECT'] * 100.0 / jsc.tag['RUNNING_TOTAL']))}%"
 
 
 def ready(jsc, *args):
