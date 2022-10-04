@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="/vocabTrainer.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
+    <script src="BsDialogs.js"></script>
+</head>
+
+<script>
+    function key(ele) {  
+      // if not ctrl or alt, process as normal
+      if (!event.ctrlKey && !event.altKey && (event.key != 'Enter')) return false;
+    
+      // prevent default action
+      event.preventDefault();  
+    
+      // special for enter
+      if (event.key == 'Enter') return call_py('check_answer')
+    
+      // accents
+      if (event.ctrlKey && (event.key == 'a')) { $('#answer').val($('#answer').val() + 'á'); }
+      if (event.ctrlKey && (event.key == 'e')) { $('#answer').val($('#answer').val() + 'é'); }
+      if (event.ctrlKey && (event.key == 'i')) { $('#answer').val($('#answer').val() + 'í'); }
+      if (event.ctrlKey && (event.key == 'o')) { $('#answer').val($('#answer').val() + 'ó'); }
+      if (event.ctrlKey && (event.key == 'u')) { $('#answer').val($('#answer').val() + 'ú'); }
+      if (event.altKey && (event.key == 'n')) { $('#answer').val($('#answer').val() + 'ñ'); }  
+      if (event.altKey  && (event.key == 'u')) { $('#answer').val($('#answer').val() + 'ü'); }
+    }
+</script>
+
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Vocab Trainer</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarScroll">
+                <ul class="navbar-nav ms-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Dropdown
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
+                            <li><a class="dropdown-item" href="#">Logout</a></li>
+                       </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <header>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="ui_pane container mb-5 mt-5" id="pane_loading">
+        <div class="row">
+            <div class="offset-md-3 col-md-6">
+                <h5 class="d-inline-block pe-5">Loading...</h5>
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui_pane container mb-5 mt-5" id="pane_quizzes_available" style='display: none'>
+        <div class="row">
+            <div class="offset-md-3 col-md-6">
+                <div class="card">
+                    <div class="card-header text-bg-success p-3">
+                        <h5>Choose Quiz</h5>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="text-center mt-3">Quizzes Available</h3>
+
+                        <div class="row">
+                            <div class="offset-md-1 col-md-10">
+                                <select id='select_quizzes_available' size=10 class="form-select mt-3" multiple aria-label="multiple select example">
+                                    <option value="1">One</option>
+                                    <option value="2">Two</option>
+                                    <option value="3">Three</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row m-4">
+                            <div class="col text-center">
+                                <button class='btn btn-success' onclick="call_py('btn_clicked', 'start_selected_quiz');">Start Selected Quiz</button>
+                            </div>
+                        </div>
+
+                        <div class="row m-4">
+                            <div class="col text-center">
+                                <button class='btn btn-primary' onclick="call_py('btn_clicked', 'create_new_quiz');">Create New Quiz</button>
+                            </div>
+                        </div>
+
+                        <div class="row m-4">
+                            <div class="col text-center">
+                                <button class='btn btn-warning' onclick="call_py('btn_clicked', 'edit_selected_quiz');">Edit Selected Quiz</button>
+                            </div>
+                        </div>
+
+                        <div class="row m-4">
+                            <div class="col text-center">
+                                <button class='btn btn-danger' type="button" data-bs-toggle="modal" data-bs-target="#modal_delete_confirmation" >Delete Selected Quiz</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="ui_pane container mb-5 mt-5" id="pane_editing_quiz" style='display: none'>
+        <div class="row">
+            <div class="offset-md-3 col-md-6">
+                <div class="card">
+                    <div class="card-header text-bg-warning p-3">
+                        <h5 id=editing_quiz_title>Editing Quiz "???"</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="offset-md-1 col-md-10">
+                                <div class="mb-3 mt-3">
+                                    <label for="quiz_textarea" class="form-label">Enter quiz data below<br>One question and answer per line, seperated by a pipe (|)<br>i.e. if the question is "2+2" and the answer is "4" then the line should read  2+2|4</label>
+                                    <textarea class="form-control" id="quiz_textarea" rows="15"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row m-3">
+                            <div class="col text-center">
+                                <button class='btn btn-secondary' onclick="call_py('btn_clicked', 'edit_selected_quiz_cancelled');">Cancel</button>
+                            </div>
+                            <div class="col text-center">
+                                <button class='btn btn-primary' onclick="event.cancelBubble = true; call_py('btn_clicked', 'edit_selected_quiz_save');">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui_pane container mb-5 mt-5" id="pane_taking_quiz" style='display: none'>
+        <div class="row">
+            <div class="offset-md-3 col-md-6">
+                <div class="card">
+                    <div class="card-header text-bg-success p-3">
+                        <h5 id=taking_quiz_title>???</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-10 offset-md-1">
+                                <div class="card mb-3  mt-5" style="max-width: 540px;">
+                                    <div class="row g-0">
+                                        <div class="col-md-4 p-2">
+                                            <img src="burrito.png" class="img-fluid rounded-start" alt="...">
+                                        </div>
+                                        <div class="col-md-7">
+                                            <div class="card-body" id=QuestionAndAnswer>
+                                                <h3>Question</h3>
+                                                <div class="ms-2 fs-3 text-secondary" id=question>hello</div>
+                                                <h3 class="mt-3">Answer</h3>
+                                                <input type="email" class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)">
+                                            </div>
+                                            <div class="card-body" id=QuestionsFinished style='display:none'>
+                                                <h5 id=Finished_Stats></h5>
+                                                <br>
+                                                <center><button class='btn btn-primary' onclick="call_py('btn_clicked', 'quiz_finished');">OK</button></center>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-10 offset-md-1" >
+                                <div class="text-center mt-5" id=progress_text>
+                                    ???
+                                </div>
+                                <div class="progress m-3" style="height:30px;">
+                                    <div id="pbar_correct" class="progress-bar bg-success progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">10</div>
+                                    <div id="pbar_remaining" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">85</div>
+                                    <div id="pbar_remedial" class="progress-bar bg-danger progress-bar-striped progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">5</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================
+        Modal Dialogs
+    ======================================================= -->
+    <div class="modal fade" id="modal_delete_confirmation" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="staticBackdropLabel">Delete Quiz Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this quiz?  This can not be undone!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="call_py('btn_clicked', 'delete_selected_quiz');">Delete</button>
+                </div>
+            </div>>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal_quiz_data_problem" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel2" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="staticBackdropLabel2">Quiz Data is not Valid</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id=quiz_data_problem_message>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal_create_new_quiz" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel3" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel3">Type in name of new quiz below</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input class="form-control" id="new_quiz_name" placeholder="New Quiz Name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="call_py('btn_clicked', 'create_new_quiz_save');">Create</button>
+                </div>
+            </div>>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal_create_new_quiz_problem" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel4" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger" id="staticBackdropLabel4">Quiz Name is not Valid</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id=modal_create_new_quiz_problem_message>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>>
+        </div>
+    </div>
+
+<div class="pull-right me-5 bg-light">
+    <div class="float-end"><a href="https://www.freepik.com/free-vector/mascot-images-burrito-set_15757809.htm#query=burrito&position=1&from_view=search">Image by DrawingMyDiary</a> on Freepik</div><br>
+</div>
+</body>
+</html>
+
+<!--
+
+
+<br><br><br>
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+
+                    <div class="float-end shadow-lg bg-white rounded p-4 col-8">
+
+
+<div class="progress">
+  <div class="progress-bar progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">45</div>
+  <div class="progress-bar bg-success progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+  <div class="progress-bar bg-info progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+</div>
+
+
+                        <div style='margin-bottom:20px;'>
+                            <div class='display-6'>Question</div>
+                            <hr>
+                            <div class='fs-3' style='color:darkgreen'>Family</div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Type your answer here" aria-label="Answer" aria-describedby="basic-addon2">
+                            <div class="input-group-append">&nbsp;&nbsp;
+                                <a href="#" class="btn btn-success">Answer</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="float-start">
+                        <div class="form-group">
+                            <label for="testdata">Test Data:</label>
+                            <textarea class="form-control" rows="50" cols=60; id="testdata"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="float-end shadow-lg p-3 mb-5 bg-white rounded">
+
+
+<div class="progress">
+  <div class="progress-bar progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">45</div>
+  <div class="progress-bar bg-success progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+  <div class="progress-bar bg-info progress-bar-striped  progress-bar-animated" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+</div>
+
+
+                        <div style='margin-bottom:20px;'>
+                            <div class='display-6'>Question</div>
+                            <hr>
+                            <div class='fs-3' style='color:darkgreen'>Family</div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Type your answer here" aria-label="Answer" aria-describedby="basic-addon2">
+                            <div class="input-group-append">&nbsp;&nbsp;
+                                <a href="#" class="btn btn-success">Answer</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+-->

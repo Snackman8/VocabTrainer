@@ -1,3 +1,11 @@
+.project
+.pydevproject
+a.html
+data/quizzes/Spanish 1
+data/quizzes/Spanish 2
+data/quizzes/Spanish 3
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
