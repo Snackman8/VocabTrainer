@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
+    <title>Vocab Trainer</title>
     <link href="/vocabTrainer.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -160,7 +160,7 @@
 
     <div class="ui_pane container mb-5 mt-5" id="pane_taking_quiz" style='display: none'>
         <div class="row">
-            <div class="offset-md-3 col-md-6">
+            <div class="offset-md-2 col-md-8">
                 <div class="card">
                     <div class="card-header text-bg-success p-3">
                         <h5 id=taking_quiz_title>???</h5>
@@ -168,7 +168,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-10 offset-md-1">
-                                <div class="card mb-3  mt-5" style="max-width: 540px;">
+                                <div class="card mb-3  mt-5">
                                     <div class="row g-0">
                                         <div class="col-md-4 p-2">
                                             <img src="burrito.png" class="img-fluid rounded-start" alt="...">
@@ -177,8 +177,8 @@
                                             <div class="card-body" id=QuestionAndAnswer>
                                                 <h3>Question</h3>
                                                 <div class="ms-2 fs-3 text-secondary" id=question>hello</div>
-                                                <h3 class="mt-3">Answer</h3>
-                                                <input type="email" class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)">
+                                                <h3 class="mt-5">Answer</h3>
+                                                <input type="email" class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" style="font-size: 32px;">
                                             </div>
                                             <div class="card-body" id=QuestionsFinished style='display:none'>
                                                 <h5 id=Finished_Stats></h5>
@@ -186,6 +186,7 @@
                                                 <center><button class='btn btn-primary' onclick="call_py('btn_clicked', 'quiz_finished');">OK</button></center>
                                             </div>
                                         </div>
+                                        <div class="col-md-8 alert alert-danger offset-md-2" role="alert" id=alert style="visibility: hidden"><h3>&nbsp;</h3></div>
                                     </div>
                                 </div>
                             </div>

@@ -167,21 +167,21 @@ def _init_pane(jsc, pane_id):
     # pane_quizzes_available
     if pane_id == 'pane_taking_quiz':
         # show the questions and answer card
-        jsc['#QuestionAndAnswer'].css.display = 'block'        
+        jsc['#QuestionAndAnswer'].css.display = 'block'
         jsc['#QuestionsFinished'].css.display = 'none'
-        
+
         # get the selected quiz and the selected quiz data
         quiz_id = _get_selected_quiz(jsc)
         jsc['#taking_quiz_title'].html = quiz_id
         quiz_data = _get_quiz_data(quiz_id)
-        
+
         # parse the quiz data
         lines = quiz_data.split('\n')
         random.shuffle(lines)
         QUESTIONS_REMAINING = []
         for x in lines:
             if not x.strip() == '':
-                f = x.split('|')
+                f = [xx.strip() for xx in x.split('|')]
                 QUESTIONS_REMAINING.append(list(f))
         QUESTIONS_ANSWERED_INCORRECTLY = set()
         CORRECT = 0
@@ -201,10 +201,10 @@ def _init_pane(jsc, pane_id):
 def _next_question(jsc):
     jsc['#question'].html = QUESTIONS_REMAINING[0][0]
     jsc['#answer'].val= ''
-    
+
     # refresh the progress bar!
     _refresh_progress_bar(jsc)
-    
+
 
 def _refresh_progress_bar(jsc):
     pbar_total = CORRECT + len(QUESTIONS_REMAINING) + REMEDIAL
@@ -294,7 +294,7 @@ def btn_clicked(jsc, btn_id):
     # ===== taking quiz =====
     elif btn_id == 'quiz_finished':
         _show_pane(jsc, 'pane_quizzes_available')
-        
+
 
 def check_answer(jsc):
     # globals
@@ -306,12 +306,17 @@ def check_answer(jsc):
 
     # get the answer
     user_answer =jsc['#answer'].val
-    
+
     # check if the answer is correct
     question = QUESTIONS_REMAINING[0][0]
-    answer = QUESTIONS_REMAINING[0][1] 
+    answer = QUESTIONS_REMAINING[0][1]
+    jsc['#alert'].html = answer
     if user_answer == QUESTIONS_REMAINING[0][1]:
         # answer is correct!
+
+        # hide the alert
+        jsc['#alert'].css.visibility = 'hidden'
+
         # delete the question from the QUESTIONS_REMAINING
         QUESTIONS_REMAINING.pop(0)
 
@@ -329,6 +334,11 @@ def check_answer(jsc):
                 logging.info('Correct for reinforcement')
     else:
         # answer is wrong!
+
+        # show the alert
+        jsc['#alert'].css.visibility = ''
+        jsc['#alert'].html = f'<h3>Wrong!  {answer}</h3>'
+
         # check if we have answered this question wrong before
         if question not in QUESTIONS_ANSWERED_INCORRECTLY:
             # first time we have seen this wrong question, so we can increment the total
@@ -338,7 +348,7 @@ def check_answer(jsc):
 
         # add this question to the set of questions answered incorrectly
         QUESTIONS_ANSWERED_INCORRECTLY.add(question)
-        
+
         # check if there are 2 of this question already int he QUESTIONS_REMAINING
         # if there are, the user is bombing this question so keep asking until they get it right
         if QUESTIONS_REMAINING.count([question, answer]) < 2:
@@ -349,7 +359,7 @@ def check_answer(jsc):
             QUESTIONS_REMAINING.insert(0, [question, answer])
         else:
             logging.info('Wrong for reinforcement')
-            
+
 
     # refresh the progress bar
     _refresh_progress_bar(jsc)
@@ -358,10 +368,10 @@ def check_answer(jsc):
     if len(QUESTIONS_REMAINING) != 0:
         _next_question(jsc)
     else:
-        jsc['#QuestionAndAnswer'].css.display = 'none'        
+        jsc['#QuestionAndAnswer'].css.display = 'none'
         jsc['#QuestionsFinished'].css.display = 'block'
         jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((CORRECT * 100.0 / RUNNING_TOTAL))}%"
-    
+
     # duno
     for x in QUESTIONS_REMAINING:
         logging.info(x)
