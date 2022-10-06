@@ -127,8 +127,9 @@ def _get_selected_quiz(jsc):
 
         Returns:
             the value of the selected quiz
-     """
-    return jsc.select_get_selected_option('#select_quizzes_available')
+    """
+    # return the value of the first selected option
+    return jsc.select_get_selected_options('#select_quizzes_available')[0][0]
 
 
 def _init_pane(jsc, pane_id):
@@ -140,15 +141,11 @@ def _init_pane(jsc, pane_id):
     """
     # pane_quizzes_available
     if pane_id == 'pane_quizzes_available':
-        # remove all current quizzes available
-        jsc.select_remove_all_options('#select_quizzes_available')
-
-        # populate with all the quizzes available
+        # load the quiz ids as the options and select the first item
         quizzes = _get_quizzes_available()
-        if len(quizzes) > 0:
-            for quiz_name in quizzes:
-                jsc.select_add_option('#select_quizzes_available', quiz_name, quiz_name)
-            jsc.select_set_selected_option('#select_quizzes_available', quizzes[0])
+        quiz_options = [list(x) for x in zip(quizzes, quizzes)]
+        jsc.select_set_options('#select_quizzes_available', quiz_options)
+        jsc.select_set_selected_options('#select_quizzes_available', quizzes[0])
 
     # pane_quizzes_available
     if pane_id == 'pane_taking_quiz':
@@ -230,10 +227,14 @@ def btn_clicked(jsc, btn_id):
     # ===== create quiz =====
     elif btn_id == 'create_new_quiz':
         # Show the modal to ask for a new quiz name
-        jsc.eval_js_code("""$('#modal_create_new_quiz').modal('show')""")
+        jsc.modal_input(title='Type in the name of the new quiz below',
+                        hint='New Quiz Name',
+                        callback="""onclick="call_py('btn_clicked', 'create_new_quiz_save');" """)
+
     elif btn_id == 'create_new_quiz_save':
         # get the new quiz name
-        new_quiz_id = jsc['#new_quiz_name'].val.strip()
+        new_quiz_id = jsc.modal_input_get_text()
+
         # validate the quiz name
         quiz_id_problems = _validate_quiz_id(new_quiz_id)
         if quiz_id_problems is not None:
@@ -247,7 +248,7 @@ def btn_clicked(jsc, btn_id):
             _show_pane(jsc, 'pane_quizzes_available')
             # clear the selections and select the new quiz
             jsc.eval_js_code("""$("#select_quizzes_available").val([]);""")
-            jsc.select_set_selected_option('#select_quizzes_available', new_quiz_id)
+            jsc.select_set_selected_options('#select_quizzes_available', new_quiz_id)
             # finally, show the editing pane
             _show_pane(jsc, 'pane_editing_quiz')
 
@@ -255,17 +256,19 @@ def btn_clicked(jsc, btn_id):
     elif btn_id == 'edit_selected_quiz':
         # show the edit quiz pane
         _show_pane(jsc, 'pane_editing_quiz')
+
     elif btn_id == 'edit_selected_quiz_cancelled':
         # edit quiz cancelled, show the quizzes available pane
         _show_pane(jsc, 'pane_quizzes_available')
+
     elif btn_id == 'edit_selected_quiz_save':
         # save the edited quiz
         new_quiz_data = jsc['#quiz_textarea'].val
         quiz_problems = _validate_quiz_data(new_quiz_data)
         if quiz_problems is not None:
             # show the problems with the quiz data
-            jsc['#quiz_data_problem_message'].html = quiz_problems
-            jsc.eval_js_code("""$('#modal_quiz_data_problem').modal('show')""")
+            jsc.modal_alert(title='Quiz Data is not Valid',
+                            body=quiz_problems)
         else:
             quiz_id = _get_selected_quiz(jsc)
             _set_quiz_data(quiz_id, new_quiz_data)
@@ -273,9 +276,14 @@ def btn_clicked(jsc, btn_id):
 
     # ===== delete quiz =====
     elif btn_id == 'delete_selected_quiz':
+        # show a modal confirming that the user really wants to delete the quiz
+        jsc.modal_confirm(title="Delete Quiz Confirmation",
+                          body="Are you sure you want to delete this quiz? This can not be undone!",
+                          callback="""onclick="call_py('btn_clicked', 'delete_selected_quiz_confirmed')" """)
+
+    elif btn_id == 'delete_selected_quiz_confirmed':
         _delete_quiz(_get_selected_quiz(jsc))
         _show_pane(jsc, 'pane_quizzes_available')
-
 
     # ===== taking quiz =====
     elif btn_id == 'quiz_finished':
