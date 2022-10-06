@@ -12,7 +12,6 @@ from pylinkjs.PyLinkJS import run_pylinkjs_app
 #    Constants
 # --------------------------------------------------
 ARGS = {}           # ARGS is filled in in the main
-PANE_IDS = ['']     # PANE_ID is filled in during the ready callback
 
 
 # --------------------------------------------------
@@ -93,7 +92,7 @@ def _validate_quiz_data(quiz_data):
         if x.strip() == '':
             continue
         if len(x.strip().split('|')) != 2:
-            return f'Data on Row {i} did not contain a pipe (|)<br><br><pre><code>{x.strip()}</code></pre>'
+            return f'Data on Row {i + 1} did not contain a pipe (|)<br><br><pre><code>{x.strip()}</code></pre>'
     return None
 
 
@@ -209,7 +208,7 @@ def _refresh_progress_bar(jsc):
 def _show_pane(jsc, pane_id):
     _init_pane(jsc, pane_id)
 
-    for pid in PANE_IDS:
+    for pid in jsc.tag['PANE_IDS']:
         if pid == pane_id:
             jsc.eval_js_code(f"""$('#{pid}').css('display', 'block')""")
         else:
@@ -238,9 +237,8 @@ def btn_clicked(jsc, btn_id):
         # validate the quiz name
         quiz_id_problems = _validate_quiz_id(new_quiz_id)
         if quiz_id_problems is not None:
-            # show the error message if the quiz name did not pass validation
-            jsc['#modal_create_new_quiz_problem_message'].html = quiz_id_problems
-            jsc.eval_js_code("""$('#modal_create_new_quiz_problem').modal('show')""")
+            jsc.modal_alert(title='Quiz name is not valid',
+                            body=quiz_id_problems)
         else:
             # create the new quiz
             _set_quiz_data(new_quiz_id, '', no_verify=True)
@@ -362,11 +360,8 @@ def check_answer(jsc):
 
 def ready(jsc, *args):
     """ called when a webpage creates a new connection the first time on load """
-    # global variables
-    global PANE_IDS
-
     # retrieve name of all elements with ui_pane class
-    PANE_IDS = jsc.eval_js_code("""$('.ui_pane').map(function() {return this.id}).get()""")
+    jsc.tag['PANE_IDS'] = jsc.eval_js_code("""$('.ui_pane').map(function() {return this.id}).get()""")
 
     # shwo the first pane
     _show_pane(jsc, 'pane_quizzes_available')
