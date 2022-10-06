@@ -131,7 +131,7 @@ def _get_selected_quiz(jsc):
     return jsc.select_get_selected_options('#select_quizzes_available')[0][0]
 
 
-def _init_pane(jsc, pane_id):
+def _init_pane(jsc, pane_id, **kwargs):
     """ initializes a pane before showing
 
         Args:
@@ -160,6 +160,11 @@ def _init_pane(jsc, pane_id):
         # parse the quiz data
         lines = quiz_data.split('\n')
         random.shuffle(lines)
+
+        # chop for mini quiz
+        if 'questions' in kwargs:
+            lines = lines[:kwargs['questions']]
+
         jsc.tag['QUESTIONS_REMAINING'] = []
         for x in lines:
             if not x.strip() == '':
@@ -205,8 +210,8 @@ def _refresh_progress_bar(jsc):
 
 
 
-def _show_pane(jsc, pane_id):
-    _init_pane(jsc, pane_id)
+def _show_pane(jsc, pane_id, **kwargs):
+    _init_pane(jsc, pane_id, **kwargs)
 
     for pid in jsc.tag['PANE_IDS']:
         if pid == pane_id:
@@ -222,6 +227,10 @@ def btn_clicked(jsc, btn_id):
     # ===== start quiz =====
     if btn_id == 'start_selected_quiz':
         _show_pane(jsc, 'pane_taking_quiz')
+    if btn_id == 'start_mini_quiz_10':
+        _show_pane(jsc, 'pane_taking_quiz', questions=10)
+    if btn_id == 'start_mini_quiz_20':
+        _show_pane(jsc, 'pane_taking_quiz', questions=20)
 
     # ===== create quiz =====
     elif btn_id == 'create_new_quiz':

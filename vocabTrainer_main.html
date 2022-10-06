@@ -65,7 +65,13 @@
                 <select id='select_quizzes_available' size=10 class="form-select"></select>
             </div>
             <!-- buttons -->
-            <button class='btn btn-success col-md-4 offset-md-4 my-2' onclick="call_py('btn_clicked', 'start_selected_quiz');">Start Selected Quiz</button>
+            <div class='row mt-3 mb-0'>
+                <button class='btn btn-success col-md-4 offset-md-4 my-2' onclick="call_py('btn_clicked', 'start_selected_quiz');">Start Selected Quiz</button>
+            </div>
+            <div class='row mt-3 mb-4'>
+                <button class='btn btn-secondary col-md-4 offset-md-1 my-2' onclick="call_py('btn_clicked', 'start_mini_quiz_10');">Start Mini Quiz<br>(10 Questions)</button>
+                <button class='btn btn-secondary col-md-4 offset-md-2 my-2' onclick="call_py('btn_clicked', 'start_mini_quiz_20');">Start Mini Quiz<br>(20 Questions)</button>
+            </div>
             <div class='row mt-3 mb-4'>
                 <button class='btn btn-primary col-md-2 offset-md-2' onclick="call_py('btn_clicked', 'create_new_quiz');">New Quiz</button>
                 <button class='btn btn-warning col-md-2 offset-md-1' onclick="call_py('btn_clicked', 'edit_selected_quiz');">Edit Quiz</button>
