@@ -9,44 +9,43 @@ from pylinkjs.PyLinkJS import run_pylinkjs_app
 
 
 # --------------------------------------------------
-#    Constants
-# --------------------------------------------------
-ARGS = {}           # ARGS is filled in in the main
-
-
-# --------------------------------------------------
 #    Business Logic
 # --------------------------------------------------
-def _delete_quiz(quiz_id):
+def _delete_quiz(quiz_path, quiz_id):
     """ delete a quiz
 
         Args:
+            quiz_path - path to quiz directory
             quiz_id - id of the quiz to delete
     """
     # delete quiz data
-    quiz_path = os.path.join(ARGS['data_path'], 'quizzes', quiz_id)
+    quiz_path = os.path.join(quiz_path, quiz_id)
     if os.path.exists(quiz_path):
         os.remove(quiz_path)
 
 
-def _get_quizzes_available():
-    """ return list of available quizzes """
+def _get_quizzes_available(quiz_path):
+    """ return list of available quizzes
+
+        Args:
+            quiz_path - path to quiz directory
+    """
     # load available quizzes from quiz dir
-    quiz_dir = os.path.join(ARGS['data_path'], 'quizzes')
-    return sorted(os.listdir(quiz_dir))
+    return sorted(os.listdir(quiz_path))
 
 
-def _get_quiz_data(quiz_id):
+def _get_quiz_data(quiz_path, quiz_id):
     """ get quiz data
 
         Args:
+            quiz_path - path to quiz directory
             quiz_id - id of the quiz to retrieve data for.  If the quiz does not exist, empty data will be returned
 
         Returns:
             quiz data in string form, pipe delimited between question and answer, \n delimited between questions
     """
     # load quiz data
-    quiz_path = os.path.join(ARGS['data_path'], 'quizzes', quiz_id)
+    quiz_path = os.path.join(quiz_path, quiz_id)
     if os.path.exists(quiz_path):
         f = open(quiz_path, 'r')
         s = f.read()
@@ -56,10 +55,11 @@ def _get_quiz_data(quiz_id):
     return s
 
 
-def _set_quiz_data(quiz_id, data, no_verify=False):
+def _set_quiz_data(quiz_path, quiz_id, data, no_verify=False):
     """ set quiz data
 
         Args:
+            quiz_path - path to quiz directory
             quiz_id - id of the quiz to save data for.  If the quiz exists, it will be overwritten
             data - data to save
             no_verify - if set to True, will skip verification
@@ -70,7 +70,7 @@ def _set_quiz_data(quiz_id, data, no_verify=False):
             raise Exception('Invalid Quiz Data!')
 
     # save quiz data
-    quiz_path = os.path.join(ARGS['data_path'], 'quizzes', quiz_id)
+    quiz_path = os.path.join(quiz_path, quiz_id)
     f = open(quiz_path, 'w')
     f.write(data)
     f.close()
@@ -96,10 +96,11 @@ def _validate_quiz_data(quiz_data):
     return None
 
 
-def _validate_quiz_id(quiz_id):
+def _validate_quiz_id(quiz_path, quiz_id):
     """ validate the quiz id
 
         Args:
+            quiz_path - path to quiz directory
             quiz_id - quiz id to validate
 
         Returns:
@@ -108,7 +109,7 @@ def _validate_quiz_id(quiz_id):
     if quiz_id.strip() == '':
         return "Quiz name can not be empty!"
 
-    quiz_path = os.path.join(ARGS['data_path'], 'quizzes', quiz_id)
+    quiz_path = os.path.join(quiz_path, 'quizzes', quiz_id)
     if os.path.exists(quiz_path):
         return f'A quiz with name of "{quiz_id}" already exists.  Edit the existing quiz instead.'
 
@@ -141,7 +142,7 @@ def _init_pane(jsc, pane_id, **kwargs):
     # pane_quizzes_available
     if pane_id == 'pane_quizzes_available':
         # load the quiz ids as the options and select the first item
-        quizzes = _get_quizzes_available()
+        quizzes = _get_quizzes_available(jsc.tag['quiz_path'])
         quiz_options = [list(x) for x in zip(quizzes, quizzes)]
         jsc.select_set_options('#select_quizzes_available', quiz_options)
         jsc.select_set_selected_options('#select_quizzes_available', quizzes[0])
@@ -155,7 +156,7 @@ def _init_pane(jsc, pane_id, **kwargs):
         # get the selected quiz and the selected quiz data
         quiz_id = _get_selected_quiz(jsc)
         jsc['#taking_quiz_title'].html = quiz_id
-        quiz_data = _get_quiz_data(quiz_id)
+        quiz_data = _get_quiz_data(jsc.tag['quiz_path'], quiz_id)
 
         # parse the quiz data
         lines = quiz_data.split('\n')
@@ -180,7 +181,7 @@ def _init_pane(jsc, pane_id, **kwargs):
     if pane_id == 'pane_editing_quiz':
         # get the selected quiz
         quiz_id = _get_selected_quiz(jsc)
-        quiz_data = _get_quiz_data(quiz_id)
+        quiz_data = _get_quiz_data(jsc.tag['quiz_path'], quiz_id)
         jsc['#editing_quiz_title'].html = f'Editing Quiz "{quiz_id}"'
         jsc['#quiz_textarea'].val = quiz_data
 
@@ -219,6 +220,9 @@ def _show_pane(jsc, pane_id, **kwargs):
         else:
             jsc.eval_js_code(f"""$('#{pid}').css('display', 'none')""")
 
+    # change the history state since this is a Single Page App
+    jsc.eval_js_code(f"""history.pushState({{'pane': '{pane_id}'}}, '', '/')""")
+
 
 # --------------------------------------------------
 #    JS Handlers
@@ -250,7 +254,7 @@ def btn_clicked(jsc, btn_id):
                             body=quiz_id_problems)
         else:
             # create the new quiz
-            _set_quiz_data(new_quiz_id, '', no_verify=True)
+            _set_quiz_data(jsc.tag['quiz_path'], new_quiz_id, '', no_verify=True)
             # show the quizzes available pane to repopulate the quiz selection box
             _show_pane(jsc, 'pane_quizzes_available')
             # clear the selections and select the new quiz
@@ -278,7 +282,7 @@ def btn_clicked(jsc, btn_id):
                             body=quiz_problems)
         else:
             quiz_id = _get_selected_quiz(jsc)
-            _set_quiz_data(quiz_id, new_quiz_data)
+            _set_quiz_data(jsc.tag['quiz_path'], quiz_id, new_quiz_data)
             _show_pane(jsc, 'pane_quizzes_available')
 
     # ===== delete quiz =====
@@ -289,7 +293,7 @@ def btn_clicked(jsc, btn_id):
                           callback="""onclick="call_py('btn_clicked', 'delete_selected_quiz_confirmed')" """)
 
     elif btn_id == 'delete_selected_quiz_confirmed':
-        _delete_quiz(_get_selected_quiz(jsc))
+        _delete_quiz(jsc.tag['quiz_path'], _get_selected_quiz(jsc))
         _show_pane(jsc, 'pane_quizzes_available')
 
     # ===== taking quiz =====
@@ -367,6 +371,19 @@ def check_answer(jsc):
         jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((jsc.tag['CORRECT'] * 100.0 / jsc.tag['RUNNING_TOTAL']))}%"
 
 
+def popstate(jsc, state, target):
+    """ called when the webpage is transitioned to using the back or forward buttons on the browser.
+
+        For single page apps, the state should be used to change the state of the page to mimic a back
+        or forward button page movement
+
+        Args:
+            state - state of the page to transition to, i.e. "show_login"
+            target - target url the page is transitioning to, i.e. "https://www.myapp.com/"
+    """
+    _show_pane(jsc, state.get('pane'))
+
+
 def ready(jsc, *args):
     """ called when a webpage creates a new connection the first time on load """
     # retrieve name of all elements with ui_pane class
@@ -380,19 +397,17 @@ def ready(jsc, *args):
 #    Main
 # --------------------------------------------------
 def main(args):
-    # globals
-    global ARGS
-
     # init the args
-    ARGS = args.copy()
+    args = args.copy()
 
     # default values
-    ARGS['data_path'] = ARGS.get('data_path', os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data'))
+    args['data_path'] = args.get('data_path', os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data'))
+    args['quiz_path'] = args.get('quiz_path', os.path.join(args['data_path'], 'quizzes'))
 
     # start the thread and the app
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    logging.info(ARGS)
-    run_pylinkjs_app(default_html='vocabTrainer_main.html')
+    logging.info(args)
+    run_pylinkjs_app(default_html='vocabTrainer_main.html', extra_settings=args)
 
 
 if __name__ == '__main__':
