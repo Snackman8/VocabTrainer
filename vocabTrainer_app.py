@@ -6,6 +6,8 @@ import logging
 import os
 import random
 from pylinkjs.PyLinkJS import run_pylinkjs_app
+from pylinkjs.plugins.authGoogleOAuth2Plugin import pluginGoogleOAuth2
+from pylinkjs.plugins.authDevAuthPlugin import pluginDevAuth
 
 
 # --------------------------------------------------
@@ -389,6 +391,15 @@ def ready(jsc, *args):
     # retrieve name of all elements with ui_pane class
     jsc.tag['PANE_IDS'] = jsc.eval_js_code("""$('.ui_pane').map(function() {return this.id}).get()""")
 
+    # show login button or user dropdown
+    if jsc.user_name is not None:
+        jsc['#userdropdown'].css.display = 'block'
+        jsc['#login_button'].css.display = 'none'
+        jsc['#userdropdown button span'].html = jsc.user_name
+    else:
+        jsc['#userdropdown'].css.display = 'none'
+        jsc['#login_button'].css.display = 'block'
+
     # shwo the first pane
     _show_pane(jsc, 'pane_quizzes_available')
 
@@ -407,15 +418,40 @@ def main(args):
     # start the thread and the app
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
     logging.info(args)
-    run_pylinkjs_app(default_html='vocabTrainer_main.html', extra_settings=args)
+
+    # default port
+    port = 8300
+
+    # init the auth method
+    if args['auth_method'] == 'GoogleOAuth2':
+        # init the google oauth2 plugin
+        auth_plugin = pluginGoogleOAuth2(client_id=args['oauth2_clientid'],
+                                         secret=args['oauth2_secret'],
+                                         port=port)
+    elif args['auth_method'] == 'DevAuth':
+        auth_plugin = pluginDevAuth()
+
+    # run the application
+    run_pylinkjs_app(default_html='vocabTrainer_main.html',
+                     port=port,
+                     plugins=[auth_plugin],
+                     extra_settings=args)
 
 
 if __name__ == '__main__':
     # parse command line arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument('--auth_method', help='authentication method', choices=['GoogleOAuth2', 'DevAuth'], default='GoogleOAuth2')
+    parser.add_argument('--oauth2_clientid', help='google oath2 client id')
+    parser.add_argument('--oauth2_secret', help='google oath2 secret')
     parser.add_argument("--verbosity", help="increase output verbosity")
     args = parser.parse_args()
     args = vars(args)
+
+    # sanity check
+    if args['auth_method'] == 'GoogleOAuth2':
+        if (args['oauth2_clientid'] is None) or (args['oauth2_secret'] is None):
+            parser.error("auth_method of GoogleOAuth2 requires --oauth2_clientid and --oauth2_secret")
 
     # run the main
     main(args)

@@ -5,7 +5,7 @@ a.py
 data/quizzes/Spanish 1
 data/quizzes/Spanish 2
 data/quizzes/Spanish 3
-
+data/db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
