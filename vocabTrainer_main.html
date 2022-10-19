@@ -52,7 +52,7 @@
             <span></span>
           </button>
           <div class="dropdown-menu">
-            <a class="dropdown-item" href="#">Change Display Name</a>
+            <a class="dropdown-item" onclick="call_py('btn_clicked_change_display_name', 'change_display_name');">Change Display Name</a>
             <a class="dropdown-item" href="logout">Logout</a>
           </div>
         </div>
@@ -142,6 +142,18 @@
                     <div id="pbar_remedial"  class="progress-bar bg-danger  progress-bar-striped progress-bar-animated" style="width: 10%">3</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasUpdateDisplayName">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasExampleLabel">Update Display Name</h5>
+        </div>
+        <div class="offcanvas-body">
+            <label class="form-label">Display Name</label>
+            <input class="form-control mb-5" placeholder='New Display Name' id="new_display_name">
+            <button class="btn btn-primary col-4 offset-2 m-2">OK</button>
+            <button class="btn btn-secondary col-4 m-2" data-bs-dismiss="offcanvas">Cancel</button>
         </div>
     </div>
 

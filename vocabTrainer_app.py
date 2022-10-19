@@ -5,6 +5,7 @@ import argparse
 import logging
 import os
 import random
+import db
 from pylinkjs.PyLinkJS import run_pylinkjs_app
 from pylinkjs.plugins.authGoogleOAuth2Plugin import pluginGoogleOAuth2
 from pylinkjs.plugins.authDevAuthPlugin import pluginDevAuth
@@ -229,13 +230,24 @@ def _show_pane(jsc, pane_id, **kwargs):
 # --------------------------------------------------
 #    JS Handlers
 # --------------------------------------------------
+def btn_clicked_change_display_name(jsc, btn_id):
+    # retrieve the display name
+    session = db.Session()
+    users = session.query(db.User).filter(db.User.auth_username == jsc.user_name, db.User.auth_method == jsc.user_auth_method)
+    display_name = users.first().display_name
+
+    # open the offcanvas
+    jsc['#new_display_name'].val = display_name
+    jsc.eval_js_code("""(new bootstrap.Offcanvas($('#offcanvasUpdateDisplayName').get(0))).show();""")
+
+
 def btn_clicked(jsc, btn_id):
     # ===== start quiz =====
     if btn_id == 'start_selected_quiz':
         _show_pane(jsc, 'pane_taking_quiz')
-    if btn_id == 'start_mini_quiz_10':
+    elif btn_id == 'start_mini_quiz_10':
         _show_pane(jsc, 'pane_taking_quiz', questions=10)
-    if btn_id == 'start_mini_quiz_20':
+    elif btn_id == 'start_mini_quiz_20':
         _show_pane(jsc, 'pane_taking_quiz', questions=20)
 
     # ===== create quiz =====
@@ -393,9 +405,24 @@ def ready(jsc, *args):
 
     # show login button or user dropdown
     if jsc.user_name is not None:
+        # add this user to the database if needed
+        session = db.Session()
+        users = session.query(db.User).filter(db.User.auth_username == jsc.user_name, db.User.auth_method == jsc.user_auth_method)
+        if users.count() == 0:
+            user = db.User(display_name=jsc.user_name, auth_username=jsc.user_name, auth_method=jsc.user_auth_method)
+            session.add(user)
+            session.commit()
+
+        # retrieve the display name
+        users = session.query(db.User).filter(db.User.auth_username == jsc.user_name, db.User.auth_method == jsc.user_auth_method)
+        display_name = users.first().display_name
+        if display_name != jsc.user_name:
+            display_name = display_name + f" ({jsc.user_name})"
+
+        # show the correct dropdown
         jsc['#userdropdown'].css.display = 'block'
         jsc['#login_button'].css.display = 'none'
-        jsc['#userdropdown button span'].html = jsc.user_name
+        jsc['#userdropdown button span'].html = display_name
     else:
         jsc['#userdropdown'].css.display = 'none'
         jsc['#login_button'].css.display = 'block'
