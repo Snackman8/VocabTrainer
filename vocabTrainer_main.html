@@ -151,9 +151,11 @@
         </div>
         <div class="offcanvas-body">
             <label class="form-label">Display Name</label>
-            <input class="form-control mb-5" placeholder='New Display Name' id="new_display_name">
-            <button class="btn btn-primary col-4 offset-2 m-2">OK</button>
-            <button class="btn btn-secondary col-4 m-2" data-bs-dismiss="offcanvas">Cancel</button>
+            <input class="form-control" placeholder='New Display Name' id="new_display_name">
+            <div id="new_display_name_feedback" class="invalid-feedback">
+            </div>
+            <button class="btn btn-primary col-4 offset-2 m-2 mt-4" onclick="call_py('btn_clicked_change_display_name', 'ok');">OK</button>
+            <button class="btn btn-secondary col-4 m-2 mt-4" data-bs-dismiss="offcanvas">Cancel</button>
         </div>
     </div>
 

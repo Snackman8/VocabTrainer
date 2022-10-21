@@ -5,7 +5,7 @@ import argparse
 import logging
 import os
 import random
-import db
+import model
 from pylinkjs.PyLinkJS import run_pylinkjs_app
 from pylinkjs.plugins.authGoogleOAuth2Plugin import pluginGoogleOAuth2
 from pylinkjs.plugins.authDevAuthPlugin import pluginDevAuth
@@ -232,13 +232,32 @@ def _show_pane(jsc, pane_id, **kwargs):
 # --------------------------------------------------
 def btn_clicked_change_display_name(jsc, btn_id):
     # retrieve the display name
-    session = db.Session()
-    users = session.query(db.User).filter(db.User.auth_username == jsc.user_name, db.User.auth_method == jsc.user_auth_method)
-    display_name = users.first().display_name
+    user_id = model.get_user_id(jsc.user_auth_username, jsc.user_auth_method)
+    display_name = model.get_user_props(user_id)['display_name']
 
-    # open the offcanvas
-    jsc['#new_display_name'].val = display_name
-    jsc.eval_js_code("""(new bootstrap.Offcanvas($('#offcanvasUpdateDisplayName').get(0))).show();""")
+    if btn_id == 'change_display_name':
+        # open the offcanvas
+        jsc['#new_display_name'].val = display_name
+        jsc.eval_js_code("""$("#new_display_name").removeClass("is-invalid")""")
+        jsc.eval_js_code("""(new bootstrap.Offcanvas($('#offcanvasUpdateDisplayName').get(0))).show();""")
+        jsc['#new_display_name_feedback'].html = f''
+    elif btn_id =='ok':
+        # check if the new display_name is valid
+        new_display_name = jsc['#new_display_name'].val.strip()
+        if (new_display_name != display_name) and model.is_display_name_in_use(new_display_name):
+            jsc.eval_js_code("""$("#new_display_name").addClass("is-invalid")""")
+            jsc['#new_display_name_feedback'].html = f'{new_display_name} is not available'
+            return
+        else:
+            # save
+            model.set_user_prop(user_id, 'display_name', new_display_name)
+            jsc.eval_js_code("""$('.offcanvas').offcanvas('hide');""")
+
+            # update the display name
+            display_name = new_display_name
+            if display_name != jsc.user_auth_username:
+                display_name = display_name + f" ({jsc.user_auth_username})"
+            jsc['#userdropdown button span'].html = display_name
 
 
 def btn_clicked(jsc, btn_id):
@@ -404,20 +423,28 @@ def ready(jsc, *args):
     jsc.tag['PANE_IDS'] = jsc.eval_js_code("""$('.ui_pane').map(function() {return this.id}).get()""")
 
     # show login button or user dropdown
-    if jsc.user_name is not None:
-        # add this user to the database if needed
-        session = db.Session()
-        users = session.query(db.User).filter(db.User.auth_username == jsc.user_name, db.User.auth_method == jsc.user_auth_method)
-        if users.count() == 0:
-            user = db.User(display_name=jsc.user_name, auth_username=jsc.user_name, auth_method=jsc.user_auth_method)
-            session.add(user)
-            session.commit()
+    if jsc.user_auth_username is not None:
+        # retrieve the user
+        user_id = model.get_user_id(jsc.user_auth_username, jsc.user_auth_method)
+        if user_id is None:
+            # create new user since this user does not exist
+            # loop to avoid display_name collisions
+            suffix = 0
+            while True:
+                display_name = jsc.user_auth_username.strip()
+                if suffix != 0:
+                    display_name = f"{display_name}{suffix}"
+                suffix = suffix + 1
+                try:
+                    user_id = model.create_user(display_name, jsc.user_auth_username, jsc.user_auth_method)
+                    break
+                except model.DisplayNameExistsException:
+                    pass
 
         # retrieve the display name
-        users = session.query(db.User).filter(db.User.auth_username == jsc.user_name, db.User.auth_method == jsc.user_auth_method)
-        display_name = users.first().display_name
-        if display_name != jsc.user_name:
-            display_name = display_name + f" ({jsc.user_name})"
+        display_name = model.get_user_props(user_id)['display_name']
+        if display_name != jsc.user_auth_username:
+            display_name = display_name + f" ({jsc.user_auth_username})"
 
         # show the correct dropdown
         jsc['#userdropdown'].css.display = 'block'
