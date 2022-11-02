@@ -45,19 +45,28 @@ def init_pane(jsc, quiz_id, user_id):
     quizzes = model.get_quizzes(quiz_ids, ['name', 'owner_user_name', 'owner_user_id'])
 
     # manually build the optgroups
+    preferred_option_value = None
     html = '<optgroup label="Your quizzes">\n'
     for k, v in quizzes.items():
         if v['owner_user_id'] == user_id:
             html += f"""<option value={k}>{v['name']} ({v['owner_user_name']})</option>"""
+            if preferred_option_value is None:
+                preferred_option_value = k
     html += '<optgroup label="Other Quizzes">\n'
     for k, v in quizzes.items():
         if v['owner_user_id'] != user_id:
             html += f"""<option value={k}>{v['name']} ({v['owner_user_name']})</option>"""
+            if preferred_option_value is None:
+                preferred_option_value = k
 
+    # set the option groups
     jsc['#select_quizzes_available'].html = html
 
-    if quizzes:
-        jsc.select_set_selected_options('#select_quizzes_available', next(iter(quizzes.keys())))
+    # select the appropriate item
+    if jsc.tag.get('preferred_selected_quiz', None) in quizzes:
+        preferred_option_value = jsc.tag['preferred_selected_quiz']
+    if preferred_option_value:
+        jsc.select_set_selected_options('#select_quizzes_available', preferred_option_value)
 
     # refresh the button states
     selectionChanged(jsc)
@@ -138,6 +147,7 @@ def newQuizSave(jsc, quiz_id, user_id):
         # clear the selections and select the new quiz
         jsc.eval_js_code("""$("#select_quizzes_available").val([]);""")
         jsc.select_set_selected_options('#select_quizzes_available', new_quiz_id)
+        jsc.tag['preferred_selected_quiz'] = new_quiz_id
 
         # finally, show the editing pane
         jsc.show_pane('paneEditViewQuiz')
@@ -146,6 +156,9 @@ def newQuizSave(jsc, quiz_id, user_id):
 @inject_quiz_id_user_id
 def selectionChanged(jsc, quiz_id, user_id):
     """ handler for when the selection changes in the quiz list box """
+    # save the newly selected item as the preferred option
+    jsc.tag['preferred_selected_quiz'] = int(quiz_id) if quiz_id is not None else None
+
     # if we are in guest mode, disable new quiz button
     jsc['#btn_New_Quiz'].prop.disabled = {True: 'true', False: ''}[user_id is None]
 

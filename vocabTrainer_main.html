@@ -127,7 +127,7 @@
                         <h3>Question</h3>
                         <div class="ms-2 fs-3 text-secondary" id=question>Question goes here</div>
                         <h3 class="mt-5">Answer</h3>
-                        <input class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" style="font-size: 32px;">
+                        <input class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" style="font-size: 32px;" autocomplete="off">
                     </div>
                     <div id='QuestionsFinished' style="display:none">
                         <h5 class="mt-4 mb-4 text-center" id=Finished_Stats>Finished Stats</h5>
@@ -138,7 +138,7 @@
                 <h5 class="col-md-8 offset-md-2 alert alert-danger text-center mt-3" id=alert style="visibility:hidden">Alert</h5>
             </div>
             <!-- progress bar -->
-            <div class="row col-md-10 offset-md-1" >
+            <div class="col-md-10 offset-md-1" >
                 <div class="text-center mt-5" id=progress_text>Progress Message</div>
                 <div class="progress m-3" style="height:30px;">
                     <div id="pbar_correct"   class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 10%">1</div>

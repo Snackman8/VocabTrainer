@@ -5,6 +5,7 @@ import os
 from sqlalchemy import create_engine, Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func
 
 
 # ==================================================
@@ -71,7 +72,7 @@ def delete_quiz(quiz_id):
     session = Session()
     quizzes = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
     quizzes.delete()
-    session.commit()    
+    session.commit()
 
 
 def get_quiz(quiz_id):
@@ -80,14 +81,14 @@ def get_quiz(quiz_id):
         Args:
             quiz_id - id of the quiz to retrieve
 
-        Returns:        
+        Returns:
             dictionary of properties for this quiz
     """
     session = Session()
     quiz = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
     if quiz.count == 0:
         raise QuizNotFoundException()
-        
+
     return {f: getattr(quiz[0], f) for f in quiz.statement.columns.keys()}
 
 
@@ -101,7 +102,7 @@ def get_quiz_ids(user_id):
             list of quiz_ids
     """
     session = Session()
-    quizzes = session.query(Quiz)    
+    quizzes = session.query(Quiz)
     if user_id is not None:
         quizzes.filter(Quiz.owner_user_id == user_id)
     return [q.quiz_id for q in quizzes]
@@ -119,7 +120,7 @@ def get_quizzes(quiz_ids, fields):
             Dictionary with key being quiz_id, value is a dictionary of properties
     """
     session = Session()
-    quizzes = session.query(Quiz, UserProps).join(UserProps, Quiz.owner_user_id == UserProps.user_id).filter_by(key = 'display_name').order_by(Quiz.name)
+    quizzes = session.query(Quiz, UserProps).join(UserProps, Quiz.owner_user_id == UserProps.user_id).filter_by(key = 'display_name').order_by(func.lower(Quiz.name))
 
     retval = {}
     for q in quizzes:
@@ -196,7 +197,7 @@ def is_quiz_owner(quiz_id, user_id):
     if quiz.count() == 0:
         return False
     return quiz.first().owner_user_id == user_id
-    
+
 
 def set_quiz(quiz_id, owner_user_id, name, data):
     session = Session()
@@ -206,7 +207,7 @@ def set_quiz(quiz_id, owner_user_id, name, data):
         session.flush()
         quiz_id = quiz.quiz_id
 #        quiz_id = get_user_id(auth_username, auth_method, session)
-        
+
     else:
         quizzes = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
         d = {}
@@ -215,7 +216,7 @@ def set_quiz(quiz_id, owner_user_id, name, data):
         if name is not None:
             d['name'] = name
         if data is not None:
-            d['data'] = data        
+            d['data'] = data
         quizzes.update(d)
     session.commit()
 

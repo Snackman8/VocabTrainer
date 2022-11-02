@@ -112,6 +112,11 @@ def refresh_progress_bar(jsc):
         percentage = f'{int((jsc.tag["CORRECT"] * 100.0 / running_total))}%'
     jsc['#progress_text'].html = f'<h3>{percentage}</h3>Progress ({len(jsc.tag["QUESTIONS_REMAINING"])} left, {jsc.tag["CORRECT"]} correct, {jsc.tag["WRONG"]} wrong, {jsc.tag["REMEDIAL"]} remedial)'
 
+    # special case if we are done
+    if len(jsc.tag['QUESTIONS_REMAINING']) == 0:
+        jsc['#pbar_remedial'].css.width = f'{int(jsc.tag["WRONG"] * 100 / pbar_total)}%'
+        jsc['#pbar_remedial'].html = jsc.tag["WRONG"]
+
 
 # --------------------------------------------------
 #    Handler Functions
