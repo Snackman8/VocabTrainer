@@ -14,6 +14,10 @@ class DisplayNameExistsException(Exception):
     pass
 
 
+class QuizNotFoundException(Exception):
+    pass
+
+
 class UserExistsException(Exception):
     pass
 
@@ -63,6 +67,72 @@ def create_user(display_name, auth_username, auth_method):
     return user_id
 
 
+def delete_quiz(quiz_id):
+    session = Session()
+    quizzes = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
+    quizzes.delete()
+    session.commit()    
+
+
+def get_quiz(quiz_id):
+    """ return information about an individual quiz
+
+        Args:
+            quiz_id - id of the quiz to retrieve
+
+        Returns:        
+            dictionary of properties for this quiz
+    """
+    session = Session()
+    quiz = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
+    if quiz.count == 0:
+        raise QuizNotFoundException()
+        
+    return {f: getattr(quiz[0], f) for f in quiz.statement.columns.keys()}
+
+
+def get_quiz_ids(user_id):
+    """ retrieve list of quiz names available
+
+        Args:
+            user_id - if None, returns all quiz names, otherwise only the quizzes that are owned by user_id
+
+        Returns:
+            list of quiz_ids
+    """
+    session = Session()
+    quizzes = session.query(Quiz)    
+    if user_id is not None:
+        quizzes.filter(Quiz.owner_user_id == user_id)
+    return [q.quiz_id for q in quizzes]
+
+
+def get_quizzes(quiz_ids, fields):
+    """ return information about each quiz in the list of quiz_ids
+
+        Args:
+            quiz_ids - list of quiz ids to return information for
+            fields - fields to return, ['owner_user_id', 'name', 'data'].  If none, returns all fields
+                     special field is owner_user_name which will return the name of the owner user
+
+        Returns:
+            Dictionary with key being quiz_id, value is a dictionary of properties
+    """
+    session = Session()
+    quizzes = session.query(Quiz, UserProps).join(UserProps, Quiz.owner_user_id == UserProps.user_id).filter_by(key = 'display_name').order_by(Quiz.name)
+
+    retval = {}
+    for q in quizzes:
+        retval[q.Quiz.quiz_id] = {}
+        for f in fields:
+            if f == 'owner_user_name':
+                retval[q.Quiz.quiz_id][f] = q.UserProps.value
+            else:
+                retval[q.Quiz.quiz_id][f] = getattr(q.Quiz, f)
+
+    return retval
+
+
 def get_user_props(user_id):
     """ return information about the user
 
@@ -77,7 +147,7 @@ def get_user_props(user_id):
 
     # get properties
     retval = {}
-    props = session.query(UserProps).filter(User.user_id == user_id)
+    props = session.query(UserProps).filter(UserProps.user_id == user_id)
     for p in props:
         retval[p.key] = p.value
     return retval
@@ -112,37 +182,44 @@ def get_user_id(auth_user_name, auth_method, session=None):
     return users.first().user_id
 
 
-# def get_quiz_ids(user_id):
-#     """ retrieve list of quiz names available
-#
-#         Args:
-#             user_id - if None, returns all quiz names, otherwise only the quizzes that are owned by user_id
-#
-#         Returns:
-#             list of quiz_ids
-#     """
-#     pass
-#
-#
-# def get_quizzes(quiz_ids, fields):
-#     """ return information about each quiz in the list of quiz_ids
-#
-#         Args:
-#             quiz_ids - list of quiz ids to return information for
-#             fields - fields to return, ['owner', 'name', 'data'].  If none, returns all fields
-#
-#         Returns:
-#             Dictionary with key being quiz_id, value is a dictionary of properties
-#     """
-#     pass
-
-
 def is_display_name_in_use(display_name):
     session = Session()
     collisions = session.query(UserProps).filter(UserProps.key == 'display_name', UserProps.value == display_name)
     if collisions.count() != 0:
         return True
     return False
+
+
+def is_quiz_owner(quiz_id, user_id):
+    session = Session()
+    quiz = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
+    if quiz.count() == 0:
+        return False
+    return quiz.first().owner_user_id == user_id
+    
+
+def set_quiz(quiz_id, owner_user_id, name, data):
+    session = Session()
+    if quiz_id is None:
+        quiz = Quiz(owner_user_id = owner_user_id, data=data, name=name)
+        session.add(quiz)
+        session.flush()
+        quiz_id = quiz.quiz_id
+#        quiz_id = get_user_id(auth_username, auth_method, session)
+        
+    else:
+        quizzes = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
+        d = {}
+        if owner_user_id is not None:
+            d['owner_user_id'] = owner_user_id
+        if name is not None:
+            d['name'] = name
+        if data is not None:
+            d['data'] = data        
+        quizzes.update(d)
+    session.commit()
+
+    return quiz_id
 
 
 def set_user_prop(user_id, key, value):
@@ -217,12 +294,22 @@ Session = None
 # --------------------------------------------------
 #    ORM Classes
 # --------------------------------------------------
+class Quiz(Base):
+    __tablename__ = "quiz"
+    quiz_id = Column(Integer, primary_key=True)
+    owner_user_id = Column(Integer, ForeignKey("users.user_id"))
+    data = Column(String)
+    name = Column(String)
+
+    def __repr__(self):
+        return '<Quiz(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['quiz_id', 'owner_user_id', 'name', 'data']]) + ')>'
+
+
 class User(Base):
     __tablename__ = "users"
     user_id = Column(Integer, primary_key=True)
     auth_username = Column(String)
     auth_method = Column(String)
-
 
     def __repr__(self):
         return '<User(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['user_id', 'auth_username', 'auth_method']]) + ')>'
@@ -236,7 +323,7 @@ class UserProps(Base):
     value = Column(String)
 
     def __repr__(self):
-        return '<User(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['user_prop_id', 'user_id', 'key', 'value']]) + ')>'
+        return '<UserProp(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['user_prop_id', 'user_id', 'key', 'value']]) + ')>'
 
 
 # --------------------------------------------------
