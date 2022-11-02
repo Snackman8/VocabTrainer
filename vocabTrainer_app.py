@@ -138,7 +138,7 @@ def main(args):
         # init the google oauth2 plugin
         auth_plugin = pluginGoogleOAuth2(client_id=args['oauth2_clientid'],
                                          secret=args['oauth2_secret'],
-                                         redirect_url=f'{args["oauth2_redirect_url"]}:{port}/login')
+                                         redirect_url=f'{args["oauth2_redirect_url"]}/login')
     elif args['auth_method'] == 'DevAuth':
         auth_plugin = pluginDevAuth()
 
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--auth_method', help='authentication method', choices=['GoogleOAuth2', 'DevAuth'], default='GoogleOAuth2')
     parser.add_argument('--oauth2_clientid', help='google oath2 client id')
-    parser.add_argument('--oauth2_redirect_url', help='google oath2 redirect url', default='http://localhost')
+    parser.add_argument('--oauth2_redirect_url', help='google oath2 redirect url', default='http://localhost:8300')
     parser.add_argument('--oauth2_secret', help='google oath2 secret')
     parser.add_argument("--verbosity", help="increase output verbosity")
     args = parser.parse_args()
