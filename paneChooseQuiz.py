@@ -103,6 +103,25 @@ def init_pane(jsc, quiz_id, user_id):
 #    Handler Functions
 # --------------------------------------------------
 @inject_quiz_id_user_id
+def clearStatsForQuiz(jsc, quiz_id, user_id):
+    """ handler for the Clear Stats For Quiz button.
+
+        Remove stats for the given quiz / user
+    """
+    # show a modal confirming that the user really wants to delete the quiz
+    jsc.modal_confirm(title="Clear Stats Confirmation",
+                      body="Are you sure you want to clear the stats for this quiz? This can not be undone!",
+                      callback="""onclick="call_py('paneChooseQuiz.clearStatsForQuizConfirmed')" """)
+
+
+@inject_quiz_id_user_id
+def clearStatsForQuizConfirmed(jsc, quiz_id, user_id):
+    """ handler for after OK of clear stats for quiz has been clicked """
+    model_stats.clearStatsForQuiz(quiz_id, user_id)
+    jsc.show_pane('paneChooseQuiz')
+
+
+@inject_quiz_id_user_id
 def deleteQuiz(jsc, quiz_id, user_id):
     """ handler for Delete Quiz Button """
     # show an error message if the user is not the owner of the quiz

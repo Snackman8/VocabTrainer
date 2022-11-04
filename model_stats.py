@@ -47,6 +47,17 @@ def add_quiz_question_stat(quiz_id, user_id, question, correct):
     session.commit()
 
 
+def clearStatsForQuiz(quiz_id, user_id):
+    """ handler for the Clear Stats For Quiz button.
+
+        Remove stats for the given quiz / user
+    """
+    session = Session()
+    quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION')
+    quiz_stats.delete()
+    session.commit()
+
+
 def get_quiz_scores(user_id):
     """ return scores for a quiz by a user
 
