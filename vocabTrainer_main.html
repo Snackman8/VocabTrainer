@@ -160,7 +160,7 @@
             <!-- header and title -->
             <h5 class="card-header text-bg-success p-3">Taking Quiz</h5>
             <!-- question and answer -->
-            <div class="row border rounded m-5 mb-0 p-3 pb-0 pt-0">
+            <div class="row border rounded m-5 mb-0 p-3 pb-0 pt-0 mt-3">
                 <div class="col-md-4"><img class="img-fluid p-1" src="burrito.png"></div>
                 <div class="col-md-8 pt-3">
                     <div id='QuestionAndAnswer'>
@@ -168,19 +168,19 @@
                         <div class="ms-2 fs-3 text-secondary" id=question>Question goes here</div>
                         <h3 class="mt-5">Answer</h3>
                         <input class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" style="font-size: 32px;" autocomplete="off">
+                        <!-- Alert -->
+                        <h4 class="alert alert-danger text-center m-0 mb-3 mt-3 p-2" id=alert style="visibility:hidden">Alert</h4>
                     </div>
                     <div id='QuestionsFinished' style="display:none">
                         <h5 class="mt-4 mb-4 text-center" id=Finished_Stats>Finished Stats</h5>
                         <center><button class='btn btn-primary' onclick="call_py('paneTakingQuiz.finished');">OK</button></center>
                     </div>
                 </div>
-                <!-- Alert -->
-                <h6 class="col-md-8 offset-md-2 alert alert-danger text-center mt-1" id=alert style="visibility:hidden">Alert</h6>
             </div>
             <!-- progress bar -->
             <div class="col-md-10 offset-md-1" >
                 <div class="text-center mt-1" id=progress_text>Progress Message</div>
-                <div class="progress m-3" style="height:30px;">
+                <div class="progress m-3 mt-1" style="height:30px;">
                     <div id="pbar_correct"   class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 10%">1</div>
                     <div id="pbar_remaining" class="progress-bar            progress-bar-striped progress-bar-animated" style="width: 10%">2</div>
                     <div id="pbar_remedial"  class="progress-bar bg-danger  progress-bar-striped progress-bar-animated" style="width: 10%">3</div>
