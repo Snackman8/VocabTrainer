@@ -98,6 +98,8 @@ def init_pane(jsc, quiz_id, user_id):
     jsc['#quiz_scores_label'].html = 'Quiz Scores for ' + display_name
     jsc.eval_js_code(f"""populate_quiz_scores('{json_data}')""")
 
+    # hide or show the alert
+    jsc['#alert_login'].css.display = '' if user_id is None else 'none'
 
 # --------------------------------------------------
 #    Handler Functions

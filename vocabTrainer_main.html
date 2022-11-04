@@ -108,13 +108,15 @@
             <!-- header and title -->
             <h5 class="card-header text-bg-success p-3">Choose Quiz</h5>
 
-            <div class="row p-5 pb-2">
+            <div class="row p-5 pb-2 pt-2">
                 <div class="col-md-4">
                     <h4 class="card-title text-center">Quizzes Available</h4>
                     <select id='select_quizzes_available' size=10 class="form-select" onchange="call_py('paneChooseQuiz.selectionChanged');"></select>
-                    <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startQuiz');">Start Selected Quiz</button>
+                    <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startQuiz');" data-bs-toggle="tooltip" title="Start quiz with all questions">Start Selected Quiz</button>
                     <br>
-                    <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startMiniQuiz');" data-bs-toggle="tooltip" title="Start 5 Question Quiz">Start Mini Quiz</button>
+                    <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startMiniQuiz');" data-bs-toggle="tooltip" title="Start 5 question quiz of most incorrect">Start Mini Quiz</button>
+                    <br>
+                    <button class='btn btn-warning w-100 mt-3' onclick="call_py('paneChooseQuiz.editQuiz');" id=btn_Edit_Quiz data-bs-toggle="tooltip" title="View or Edit an existing quiz">Edit Quiz</button>
                 </div>
                 <div class="col-md-4 mt-2">
                     <h6 class="text-center" id=quiz_scores_label>Quiz Scores for xxx</h6>
@@ -123,16 +125,18 @@
                 <div class="col-md-4 mt-2">
                     <h6 class="text-center" id=quiz_stats_label>Quiz Stats for xxx</h6>
                     <div class="overflow-auto border rounded p-2" style="height:235px;" id=quiz_stats></div>
-                    <button class='btn btn-danger w-100 mt-3' onclick="call_py('paneChooseQuiz.clearStatsForQuiz');" id=btn_Clear_Stats_For_Quiz>Clear Stats for Quiz</button>
+                    <button class='btn btn-danger w-100 mt-3' onclick="call_py('paneChooseQuiz.clearStatsForQuiz');" id=btn_Clear_Stats_For_Quiz  data-bs-toggle="tooltip" title="Clear stats for selected quiz only">Clear Stats for Quiz</button>
                 </div>
             </div>
 
+            <h6 class="alert alert-warning text-center mt-2 mb-2" id=alert_login style="display:">Login to Create, Edit, and Delete your own quizzes</h6>
+
             <!-- buttons -->
             <div class='col-md-12 mt-3 mb-4 ps-5'>
-                <button class='btn btn-primary col-md-2' onclick="call_py('paneChooseQuiz.newQuiz');" id=btn_New_Quiz>New Quiz</button>
-                <button class='btn btn-warning col-md-2 ms-3' onclick="call_py('paneChooseQuiz.editQuiz');" id=btn_Edit_Quiz>Edit Quiz</button>
+                <button class='btn btn-primary col-md-2' onclick="call_py('paneChooseQuiz.newQuiz');" id=btn_New_Quiz>Create Quiz</button>
                 <button class='btn btn-danger  col-md-2 ms-3' onclick="call_py('paneChooseQuiz.deleteQuiz');" id=btn_Delete_Quiz>Delete Quiz</button>
             </div>
+
         </div>
 
         <!-- edit quiz -->
