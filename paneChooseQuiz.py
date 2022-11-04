@@ -5,8 +5,11 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import datetime
 import functools
+import json
 import model
+import model_stats
 from utils import inject_quiz_id_user_id
 
 
@@ -74,10 +77,26 @@ def init_pane(jsc, quiz_id, user_id):
     if user_id is not None:
         jsc['#btn_New_Quiz'].prop.disabled = ''
         jsc['#btn_Delete_Quiz'].prop.disabled = ''
+        jsc['#btn_Clear_Stats_For_Quiz'].prop.disabled = ''
     else:
         jsc['#btn_New_Quiz'].prop.disabled = 'true'
         jsc['#btn_Delete_Quiz'].prop.disabled = 'true'
-    pass
+        jsc['#btn_Clear_Stats_For_Quiz'].prop.disabled = 'true'
+
+    # update the stats
+    data = model_stats.get_quiz_scores(user_id)
+    date_handler = lambda obj: (
+        obj.isoformat()
+        if isinstance(obj, (datetime.datetime, datetime.date))
+        else None
+    )
+    json_data = json.dumps(data, default=date_handler)
+    if user_id is None:
+        display_name = 'Guest'
+    else:
+        display_name = model.get_user_props(user_id)['display_name']
+    jsc['#quiz_scores_label'].html = 'Quiz Scores for ' + display_name
+    jsc.eval_js_code(f"""populate_quiz_scores('{json_data}')""")
 
 
 # --------------------------------------------------
@@ -169,6 +188,23 @@ def selectionChanged(jsc, quiz_id, user_id):
     else:
         jsc['#btn_Edit_Quiz'].html = 'View Quiz'
         jsc['#btn_Delete_Quiz'].prop.disabled = 'true'
+
+    # update the stats
+    data = model_stats.get_quiz_question_stats(quiz_id, user_id)
+    date_handler = lambda obj: (
+        obj.isoformat()
+        if isinstance(obj, (datetime.datetime, datetime.date))
+        else None
+    )
+    json_data = json.dumps(data, default=date_handler)
+
+    if user_id is None:
+        display_name = 'Guest'
+    else:
+        display_name = model.get_user_props(user_id)['display_name']
+
+    jsc['#quiz_stats_label'].html = 'Quiz Stats for ' + model.get_quiz(quiz_id)['name']
+    jsc.eval_js_code(f"""populate_quiz_stats('{json_data}')""")
 
 
 @inject_quiz_id_user_id

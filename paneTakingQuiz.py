@@ -7,6 +7,7 @@
 # --------------------------------------------------
 import logging
 import model
+import model_stats
 import random
 from utils import inject_quiz_id_user_id
 
@@ -14,7 +15,8 @@ from utils import inject_quiz_id_user_id
 # --------------------------------------------------
 #    Functions
 # --------------------------------------------------
-def check_answer(jsc):
+@inject_quiz_id_user_id
+def check_answer(jsc, quiz_id, user_id):
     """
         checks if the answer in the UI is correct for the question.  Also updates the metrics
 
@@ -53,8 +55,12 @@ def check_answer(jsc):
         if question not in jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"]:
             logging.info('Correct the first time')
             jsc.tag["CORRECT"] = jsc.tag["CORRECT"] + 1
+
+            # update the stats
+            model_stats.update_quiz_question_stat(quiz_id, user_id, question, correct=True)
         else:
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] - 1
+
     else:
         # answer is wrong, so show the alert
         jsc['#alert'].css.visibility = ''
@@ -68,6 +74,9 @@ def check_answer(jsc):
             # first time we have seen this wrong question, so we can increment the total
             jsc.tag["WRONG"] = jsc.tag["WRONG"] + 1
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
+
+            # update the stats
+            model_stats.update_quiz_question_stat(quiz_id, user_id, question, correct=False)
 
         # add this question to the set of questions answered incorrectly
         jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"].add(question)
@@ -84,6 +93,9 @@ def check_answer(jsc):
         jsc['#QuestionAndAnswer'].css.display = 'none'
         jsc['#QuestionsFinished'].css.display = 'block'
         jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((jsc.tag['CORRECT'] * 100.0 / running_total))}%"
+
+        # update the stats
+        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'])
 
 
 def next_question(jsc):
@@ -128,8 +140,8 @@ def init_pane(jsc, quiz_id, user_id):
     jsc['#QuestionsFinished'].css.display = 'none'
 
     # get the selected quiz and the selected quiz data
-    jsc['#taking_quiz_title'].html = quiz_id
     quiz = model.get_quiz(quiz_id)
+    jsc['#paneTakingQuiz h5'].html = 'Taking Quiz ' + quiz['name']
     quiz_data = quiz['data']
 
     # parse the quiz data

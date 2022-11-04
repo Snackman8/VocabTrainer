@@ -34,6 +34,38 @@
             if (event.altKey  && (event.key == 'u')) { $('#answer').val($('#answer').val() + 'ü'); }
           }
     </script>
+
+    <script>
+        function populate_quiz_scores(data) {
+            data = JSON.parse(data);
+            html = '<table class="table table-sm table-striped">';
+            for (var i=0; i < data.length; i++) {
+                t = new Date(data[i]['time_created'] + 'Z');
+                dt = t.toLocaleDateString() + ' ' + t.toLocaleTimeString();
+
+                html = html + '<tr>';
+                html = html + '<td style="padding-right:40px;" data-bs-toggle="tooltip" title="' + dt + '">' + data[i]['percentage'] + '%</td>';
+                html = html + '<td style="padding-right:20px;" width=100% data-bs-toggle="tooltip" title="' + dt + '">' + data[i]['name'] + '</td>';
+                html = html + '</tr>';
+            }
+            html = html + '</table>';
+            $('#quiz_scores').html(html);
+        }
+
+        function populate_quiz_stats(data) {
+            data = JSON.parse(data);
+            html = '<table>';
+            for (var i=0; i < data.length; i++) {
+                console.log(data[i]);
+                html = html + '<tr>';
+                html = html + '<td style="padding-right:40px;">' + data[i]['percentage'] + '%</td>';
+                html = html + '<td style="padding-right:20px;" width=100%>' + data[i]['question'] + '</td>';
+                html = html + '</tr>';
+            }
+            html = html + '</table>';
+            $('#quiz_stats').html(html);
+        }
+    </script>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -72,30 +104,32 @@
         </div>
 
         <!-- select quiz -->
-        <div class="ui_pane card col-md-6 offset-md-3 mt-3" id="paneChooseQuiz">
+        <div class="ui_pane card col-md-10 offset-md-1 mt-3" id="paneChooseQuiz">
             <!-- header and title -->
             <h5 class="card-header text-bg-success p-3">Choose Quiz</h5>
-            <h4 class="card-title text-center mt-3">Quizzes Available</h4>
-            <!-- select -->
-            <div class="row col-md-10 mx-auto my-3">
-                <select id='select_quizzes_available' size=10 class="form-select" onchange="call_py('paneChooseQuiz.selectionChanged');"></select>
-            </div>
-            <!-- buttons -->
-            <div class='row mt-3 mb-0'>
-<!--                <button class='btn btn-success col-md-4 offset-md-4 my-2' onclick="call_py('btn_clicked', 'start_selected_quiz');">Start Selected Quiz</button> -->
-                <button class='btn btn-success col-md-4 offset-md-4 my-2' onclick="call_py('paneChooseQuiz.startQuiz');">Start Selected Quiz</button>
 
+            <div class="row p-5 pb-2">
+                <div class="col-md-4">
+                    <h4 class="card-title text-center">Quizzes Available</h4>
+                    <select id='select_quizzes_available' size=10 class="form-select" onchange="call_py('paneChooseQuiz.selectionChanged');"></select>
+                    <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startQuiz');">Start Selected Quiz</button>
+                </div>
+                <div class="col-md-4 mt-2">
+                    <h6 class="text-center" id=quiz_scores_label>Quiz Scores for xxx</h6>
+                    <div class="overflow-auto border rounded p-2" style="height:235px;" id=quiz_scores></div>
+                </div>
+                <div class="col-md-4 mt-2">
+                    <h6 class="text-center" id=quiz_stats_label>Quiz Stats for xxx</h6>
+                    <div class="overflow-auto border rounded p-2" style="height:235px;" id=quiz_stats></div>
+                    <button class='btn btn-danger w-100 mt-3' onclick="call_py('paneChooseQuiz.clearStatsForQuiz');" id=btn_Clear_Stats_For_Quiz>Clear Stats for Quiz</button>
+                </div>
             </div>
-<!--            
-            <div class='row mt-3 mb-4'>
-                <button class='btn btn-secondary col-md-4 offset-md-1 my-2' onclick="call_py('btn_clicked', 'start_mini_quiz_10');">Start Mini Quiz<br>(10 Questions)</button>
-                <button class='btn btn-secondary col-md-4 offset-md-2 my-2' onclick="call_py('btn_clicked', 'start_mini_quiz_20');">Start Mini Quiz<br>(20 Questions)</button>
-            </div>
--->            
-            <div class='row mt-3 mb-4'>
-                <button class='btn btn-primary col-md-2 offset-md-2' onclick="call_py('paneChooseQuiz.newQuiz');" id=btn_New_Quiz>New Quiz</button>
-                <button class='btn btn-warning col-md-2 offset-md-1' onclick="call_py('paneChooseQuiz.editQuiz');" id=btn_Edit_Quiz>Edit Quiz</button>
-                <button class='btn btn-danger  col-md-2 offset-md-1' onclick="call_py('paneChooseQuiz.deleteQuiz');" id=btn_Delete_Quiz>Delete Quiz</button>
+
+            <!-- buttons -->
+            <div class='col-md-12 mt-3 mb-4 ps-5'>
+                <button class='btn btn-primary col-md-2' onclick="call_py('paneChooseQuiz.newQuiz');" id=btn_New_Quiz>New Quiz</button>
+                <button class='btn btn-warning col-md-2 ms-3' onclick="call_py('paneChooseQuiz.editQuiz');" id=btn_Edit_Quiz>Edit Quiz</button>
+                <button class='btn btn-danger  col-md-2 ms-3' onclick="call_py('paneChooseQuiz.deleteQuiz');" id=btn_Delete_Quiz>Delete Quiz</button>
             </div>
         </div>
 
@@ -171,4 +205,10 @@
         </div>
     </footer>
 </body>
+
+<script>
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
+
 </html>

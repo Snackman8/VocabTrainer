@@ -6,10 +6,12 @@ import argparse
 import logging
 # app
 import model
+import model_stats
 from pylinkjs.PyLinkJS import run_pylinkjs_app
 from pylinkjs.plugins.authGoogleOAuth2Plugin import pluginGoogleOAuth2
 from pylinkjs.plugins.authDevAuthPlugin import pluginDevAuth
-from pylinkjs.plugins.appSinglePageAppPlugin import pluginSinglePageApp
+from pylinkjs.plugins.appSinglePageAppPlugin import pluginSinglePageApp, popstate
+
 # panes
 import paneLoading, paneChooseQuiz, paneEditViewQuiz, paneTakingQuiz
 
@@ -35,7 +37,7 @@ def change_display_name_ok(jsc):
     # retrieve the display name
     user_id = model.get_user_id(jsc.user_auth_username, jsc.user_auth_method)
     display_name = model.get_user_props(user_id)['display_name']
-    
+
     # check if the new display_name is valid
     new_display_name = jsc['#new_display_name'].val.strip()
     if (new_display_name != display_name) and model.is_display_name_in_use(new_display_name):
@@ -52,22 +54,9 @@ def change_display_name_ok(jsc):
         if display_name != jsc.user_auth_username:
             display_name = display_name + f" ({jsc.user_auth_username})"
         jsc['#userdropdown button span'].html = display_name
-        
+
         # update the paneChooseQuiz to show the new display name
         jsc.show_pane('paneChooseQuiz')
-
-
-def popstate(jsc, state, target):
-    """ called when the webpage is transitioned to using the back or forward buttons on the browser.
-
-        For single page apps, the state should be used to change the state of the page to mimic a back
-        or forward button page movement
-
-        Args:
-            state - state of the page to transition to, i.e. "show_login"
-            target - target url the page is transitioning to, i.e. "https://www.myapp.com/"
-    """
-    jsc.show_pane(state.get('pane'))
 
 
 def ready(jsc, *args):

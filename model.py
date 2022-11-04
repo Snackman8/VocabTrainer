@@ -2,10 +2,9 @@
 #    Imports
 # --------------------------------------------------
 import os
-from sqlalchemy import create_engine, Column, ForeignKey, Integer, String
+from sqlalchemy import create_engine, func, Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import func
 
 
 # ==================================================
@@ -90,6 +89,21 @@ def get_quiz(quiz_id):
         raise QuizNotFoundException()
 
     return {f: getattr(quiz[0], f) for f in quiz.statement.columns.keys()}
+
+
+def get_quiz_questions_stats(quiz_id, user_id):
+    """ return stats about the quiz questions
+
+        Args:
+            quiz_id - id of the quiz to retrieve
+            user_id - id of the user to return stats for
+
+        Returns:
+            dictionary of stats for each question in the quiz
+    """
+    session = Session()
+    quiz_stat = session.query(QuizStat).filter(QuizStat.quiz_id == quiz_id, QuizStat.user_id == user_id)
+    return [u._asdict() for u in quiz_stat.all()]
 
 
 def get_quiz_ids(user_id):
@@ -206,8 +220,6 @@ def set_quiz(quiz_id, owner_user_id, name, data):
         session.add(quiz)
         session.flush()
         quiz_id = quiz.quiz_id
-#        quiz_id = get_user_id(auth_username, auth_method, session)
-
     else:
         quizzes = session.query(Quiz).filter(Quiz.quiz_id == quiz_id)
         d = {}
