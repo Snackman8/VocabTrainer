@@ -113,6 +113,8 @@
                     <h4 class="card-title text-center">Quizzes Available</h4>
                     <select id='select_quizzes_available' size=10 class="form-select" onchange="call_py('paneChooseQuiz.selectionChanged');"></select>
                     <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startQuiz');">Start Selected Quiz</button>
+                    <br>
+                    <button class='btn btn-success w-100 mt-3' onclick="call_py('paneChooseQuiz.startMiniQuiz');" data-bs-toggle="tooltip" title="Start 5 Question Quiz">Start Mini Quiz</button>
                 </div>
                 <div class="col-md-4 mt-2">
                     <h6 class="text-center" id=quiz_scores_label>Quiz Scores for xxx</h6>

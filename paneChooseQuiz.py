@@ -211,3 +211,9 @@ def selectionChanged(jsc, quiz_id, user_id):
 def startQuiz(jsc, quiz_id, user_id):
     """ handler for the Start Quiz Button """
     jsc.show_pane('paneTakingQuiz')
+
+
+@inject_quiz_id_user_id
+def startMiniQuiz(jsc, quiz_id, user_id):
+    """ handler for the Start Mini Quiz Button """
+    jsc.show_pane('paneTakingQuiz', mini_quiz=True)

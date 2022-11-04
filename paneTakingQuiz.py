@@ -134,7 +134,7 @@ def refresh_progress_bar(jsc):
 #    Handler Functions
 # --------------------------------------------------
 @inject_quiz_id_user_id
-def init_pane(jsc, quiz_id, user_id):
+def init_pane(jsc, quiz_id, user_id, **kwargs):
     # show the questions and answer card
     jsc['#QuestionAndAnswer'].css.display = 'block'
     jsc['#QuestionsFinished'].css.display = 'none'
@@ -146,12 +146,26 @@ def init_pane(jsc, quiz_id, user_id):
 
     # parse the quiz data
     lines = quiz_data.split('\n')
+
+    # chop for mini quiz
+    if kwargs.get('mini_quiz', False):
+        data = {}
+        for x in lines:
+            if not x.strip() == '':
+                data[x.split('|')[0].strip()] = x
+        
+        quiz_stats = model_stats.get_quiz_question_stats(quiz_id, user_id)
+        mini_quiz_lines = []
+        for stat in quiz_stats:
+            if stat['question'] in data:
+                mini_quiz_lines.append(data[stat['question']])
+            if len(mini_quiz_lines) >= 5:
+                break
+        lines = mini_quiz_lines
+
+    # shuffle the lines
     random.shuffle(lines)
-
-    # # chop for mini quiz
-    # if 'questions' in kwargs:
-    #     lines = lines[:kwargs['questions']]
-
+        
     jsc.tag['QUESTIONS_REMAINING'] = []
     for x in lines:
         if not x.strip() == '':

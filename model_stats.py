@@ -122,6 +122,8 @@ def get_quiz_question_stats(quiz_id, user_id):
             pass
         retval.append(d)
 
+    retval = sorted(retval, key=lambda x: (x['percentage'], x['question']))
+
     return retval
 
 
