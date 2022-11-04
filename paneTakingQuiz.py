@@ -57,7 +57,7 @@ def check_answer(jsc, quiz_id, user_id):
             jsc.tag["CORRECT"] = jsc.tag["CORRECT"] + 1
 
             # update the stats
-            model_stats.update_quiz_question_stat(quiz_id, user_id, question, correct=True)
+            model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=True)
         else:
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] - 1
 
@@ -76,7 +76,7 @@ def check_answer(jsc, quiz_id, user_id):
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
 
             # update the stats
-            model_stats.update_quiz_question_stat(quiz_id, user_id, question, correct=False)
+            model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=False)
 
         # add this question to the set of questions answered incorrectly
         jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"].add(question)

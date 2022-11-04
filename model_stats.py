@@ -27,6 +27,26 @@ def add_quiz_score(quiz_id, user_id, correct, total):
     session.commit()
 
 
+def add_quiz_question_stat(quiz_id, user_id, question, correct):
+    """ add a new quiz question stat for the user
+
+        Args:
+            quiz_id - id of the quiz to save the stat for
+            user_id - id of the user to save the stat for
+            question - question to save state for
+            correct - True if correct, False if not
+    """
+    # special case for guest
+    if user_id is None:
+        user_id = 0
+
+    # add a new record
+    session = Session()
+    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_QUESTION', key=question, value=f'{1 if correct else 0}')
+    session.add(quiz_stat)
+    session.commit()
+
+
 def get_quiz_scores(user_id):
     """ return scores for a quiz by a user
 
@@ -78,15 +98,23 @@ def get_quiz_question_stats(quiz_id, user_id):
 
     # query for records
     session = Session()
-    quiz_stats = session.query(QuizStat, Quiz).join(QuizStat, Quiz.quiz_id == QuizStat.quiz_id).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION')
+    quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION')
+    stats = {}
+    for r in quiz_stats.all():
+        if r.key not in stats:
+            stats[r.key] = []
+        stats[r.key].append(r)
+
+    for k in stats:
+        stats[k] = sorted(stats[k], key=lambda x: x.time_created)
 
     # process results
     retval = []
-    for r in quiz_stats.all():
+    for k in stats:
         d = {}
-        d = {'question': r.QuizStat.key,
-             'correct': int(r.QuizStat.value.partition('/')[0]),
-             'total': int(r.QuizStat.value.partition('/')[2]), }
+        d = {'question': k,
+             'correct': sum([1 if x.value == '1' else 0 for x in stats[k][-5:]]),
+             'total': len(stats[k][-5:])}
         d['percentage'] = 0
         try:
             d['percentage'] = round(d['correct'] / d['total'] * 100)
@@ -95,32 +123,6 @@ def get_quiz_question_stats(quiz_id, user_id):
         retval.append(d)
 
     return retval
-
-
-def update_quiz_question_stat(quiz_id, user_id, question, correct):
-    # special case for guest
-    if user_id is None:
-        user_id = 0
-
-    # query for records
-    session = Session()
-    quiz_stats = session.query(QuizStat).filter(QuizStat.quiz_id == quiz_id, QuizStat.user_id == user_id, QuizStat.stat_type == 'QUIZ_QUESTION', QuizStat.key == question)
-
-    # sanity check
-    if quiz_stats.count() > 1:
-        raise Exception('Error!  Corrupted stats!')
-
-    if quiz_stats.count() == 0:
-        # create a new record
-        quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_QUESTION', key=question, value=f'{1 if correct else 0}/{1}')
-        session.add(quiz_stat)
-    else:
-        # update existing records
-        quiz_stat = quiz_stats.first()
-        c = int(quiz_stat.value.partition('/')[0]) + 1 if correct else 0
-        t = int(quiz_stat.value.partition('/')[2]) + 1
-        quiz_stat.value = f'{c}/{t}'
-    session.commit()
 
 
 # --------------------------------------------------
