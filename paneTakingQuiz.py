@@ -44,7 +44,7 @@ def check_answer(jsc, quiz_id, user_id):
     question = jsc.tag["QUESTIONS_REMAINING"][0][0]
     answer = jsc.tag["QUESTIONS_REMAINING"][0][1]
     jsc['#alert'].html = answer
-    if user_answer == jsc.tag["QUESTIONS_REMAINING"][0][1]:
+    if user_answer.strip().lower() == jsc.tag["QUESTIONS_REMAINING"][0][1].strip().lower():
         # answer is correct, so hide the alert
         jsc['#alert'].css.visibility = 'hidden'
 
@@ -153,19 +153,31 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
         for x in lines:
             if not x.strip() == '':
                 data[x.split('|')[0].strip()] = x
-        
+
         quiz_stats = model_stats.get_quiz_question_stats(quiz_id, user_id)
-        mini_quiz_lines = []
+        mini_quiz_lines = {}
         for stat in quiz_stats:
             if stat['question'] in data:
-                mini_quiz_lines.append(data[stat['question']])
+                mini_quiz_lines[stat['question']] = data[stat['question']]
             if len(mini_quiz_lines) >= 5:
                 break
-        lines = mini_quiz_lines
+
+        for k, v in data.items():
+            if len(mini_quiz_lines) >= 5:
+                break
+            if k not in mini_quiz_lines:
+                mini_quiz_lines[k] = v
+
+        lines = list(mini_quiz_lines.values())
+
+    # error if there are no questions
+    if len(lines) == 0:
+        jsc.show_pane('paneChooseQuiz')
+        raise Exception('Error!  There are no questions for this quiz')
 
     # shuffle the lines
     random.shuffle(lines)
-        
+
     jsc.tag['QUESTIONS_REMAINING'] = []
     for x in lines:
         if not x.strip() == '':
