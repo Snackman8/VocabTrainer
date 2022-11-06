@@ -45,7 +45,13 @@
 
                 html = html + '<tr>';
                 html = html + '<td style="padding-right:40px;" data-bs-toggle="tooltip" title="' + dt + '">' + data[i]['percentage'] + '%</td>';
-                html = html + '<td style="padding-right:20px;" width=100% data-bs-toggle="tooltip" title="' + dt + '">' + data[i]['name'] + '</td>';
+
+                name = data[i]['name'];
+                if (data[i]['quiz_type'] != '') {
+                    name = name + ' (' + data[i]['quiz_type'] + ')';
+                }
+
+                html = html + '<td style="padding-right:20px;" width=100% data-bs-toggle="tooltip" title="' + dt + '">' + name + '</td>';
                 html = html + '</tr>';
             }
             html = html + '</table>';
@@ -56,7 +62,6 @@
             data = JSON.parse(data);
             html = '<table>';
             for (var i=0; i < data.length; i++) {
-                console.log(data[i]);
                 html = html + '<tr>';
                 html = html + '<td style="padding-right:40px;">' + data[i]['percentage'] + '%</td>';
                 html = html + '<td style="padding-right:20px;" width=100%>' + data[i]['question'] + '</td>';

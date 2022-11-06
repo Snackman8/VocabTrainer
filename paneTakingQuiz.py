@@ -95,7 +95,7 @@ def check_answer(jsc, quiz_id, user_id):
         jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((jsc.tag['CORRECT'] * 100.0 / running_total))}%"
 
         # update the stats
-        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'])
+        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'])
 
 
 def next_question(jsc):
@@ -148,7 +148,9 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     lines = quiz_data.split('\n')
 
     # chop for mini quiz
+    jsc.tag['QUIZ_TYPE'] = ''
     if kwargs.get('mini_quiz', False):
+        jsc.tag['QUIZ_TYPE'] = 'Mini'
         data = {}
         for x in lines:
             if not x.strip() == '':

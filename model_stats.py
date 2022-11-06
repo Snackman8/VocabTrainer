@@ -8,7 +8,7 @@ from sqlalchemy import func, Column, DateTime, ForeignKey, Integer, String
 # ==================================================
 #    Model
 # ==================================================
-def add_quiz_score(quiz_id, user_id, correct, total):
+def add_quiz_score(quiz_id, user_id, quiz_type, correct, total):
     """ add a new quiz score for the user
 
         Args:
@@ -22,7 +22,7 @@ def add_quiz_score(quiz_id, user_id, correct, total):
         user_id = 0
 
     session = Session()
-    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key='score', value=f'{correct}/{total}')
+    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key=quiz_type, value=f'{correct}/{total}')
     session.add(quiz_stat)
     session.commit()
 
@@ -80,6 +80,7 @@ def get_quiz_scores(user_id):
     for r in quiz_scores.limit(10).all():
         d = {}
         d = {'name': r.Quiz.name,
+             'quiz_type': r.QuizStat.key,
              'time_created': r.QuizStat.time_created,
              'correct': int(r.QuizStat.value.partition('/')[0]),
              'total': int(r.QuizStat.value.partition('/')[2]),
