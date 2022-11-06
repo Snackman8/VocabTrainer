@@ -104,7 +104,7 @@
         </div>
 
         <!-- select quiz -->
-        <div class="ui_pane card col-md-10 offset-md-1 mt-3" id="paneChooseQuiz">
+        <div class="ui_pane card col-md-10 offset-md-1 mt-3" id="paneChooseQuiz" style="display:none">
             <!-- header and title -->
             <h5 class="card-header text-bg-success p-3">Choose Quiz</h5>
 
@@ -136,11 +136,10 @@
                 <button class='btn btn-primary col-md-2' onclick="call_py('paneChooseQuiz.newQuiz');" id=btn_New_Quiz>Create Quiz</button>
                 <button class='btn btn-danger  col-md-2 ms-3' onclick="call_py('paneChooseQuiz.deleteQuiz');" id=btn_Delete_Quiz>Delete Quiz</button>
             </div>
-
         </div>
 
         <!-- edit quiz -->
-        <div class="ui_pane card col-md-6 offset-md-3 mt-3" id="paneEditViewQuiz">
+        <div class="ui_pane card col-md-6 offset-md-3 mt-3" id="paneEditViewQuiz" style="display:none">
             <!-- header and title -->
             <h5 class="card-header text-bg-warning p-3">Editing Quiz</h5>
             <h5 class="card-title mt-1 p-3">Enter quiz data below<br>One question and answer per line, seperated by a pipe (|)<br>i.e. if the question is "2+2" and the answer is "4" then the line should read  2+2|4</h5>
@@ -156,7 +155,7 @@
         </div>
 
         <!-- taking quiz -->
-        <div class="ui_pane card col-md-8 offset-md-2 mt-3" id="paneTakingQuiz">
+        <div class="ui_pane card col-md-8 offset-md-2 mt-3" id="paneTakingQuiz" style="display:none">
             <!-- header and title -->
             <h5 class="card-header text-bg-success p-3">Taking Quiz</h5>
             <!-- question and answer -->
