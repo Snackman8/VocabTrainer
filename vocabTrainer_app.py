@@ -116,7 +116,7 @@ def main(args):
     args = args.copy()
 
     # start the thread and the app
-    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(threadName)s %(message)s')
     logging.info(args)
 
     # default port
