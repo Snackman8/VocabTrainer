@@ -75,8 +75,8 @@ def check_answer(jsc, quiz_id, user_id):
             jsc.tag["WRONG"] = jsc.tag["WRONG"] + 1
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
 
-            # update the stats
-            model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=False)
+        # update the stats
+        model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=False)
 
         # add this question to the set of questions answered incorrectly
         jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"].add(question)
@@ -138,6 +138,7 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     # show the questions and answer card
     jsc['#QuestionAndAnswer'].css.display = 'block'
     jsc['#QuestionsFinished'].css.display = 'none'
+    jsc['#alert'].css.visibility = 'hidden'
 
     # get the selected quiz and the selected quiz data
     quiz = model.get_quiz(quiz_id)
@@ -157,19 +158,29 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
                 data[x.split('|')[0].strip()] = x
 
         quiz_stats = model_stats.get_quiz_question_stats(quiz_id, user_id)
-        mini_quiz_lines = {}
-        for stat in quiz_stats:
-            if stat['question'] in data:
-                mini_quiz_lines[stat['question']] = data[stat['question']]
-            if len(mini_quiz_lines) >= 5:
-                break
 
-        for k, v in data.items():
+        # find questions we have no stats for
+        data_no_stats = dict(data)
+        for stat in quiz_stats:
+            if stat['question'] in data_no_stats:
+                del data_no_stats[stat['question']]
+
+        # load questions with no stats first
+        mini_quiz_lines = {}
+        for k, v in data_no_stats.items():
             if len(mini_quiz_lines) >= 5:
                 break
             if k not in mini_quiz_lines:
+                print('Adding question because no stats', k)
                 mini_quiz_lines[k] = v
 
+        # then load questions with bad stats
+        for stat in quiz_stats:
+            if len(mini_quiz_lines) >= 5:
+                break
+            if stat['question'] in data:
+                print('Adding question because bad stat', stat['question'])
+                mini_quiz_lines[stat['question']] = data[stat['question']]
         lines = list(mini_quiz_lines.values())
 
     # error if there are no questions
