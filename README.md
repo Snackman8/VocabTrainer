@@ -2,6 +2,8 @@
 
 Application to simulate flash cards for learning vocabulary and other terms.
 
+Designed for use on desktop browsers and mobile phones.
+
 The Adaptive Mini Quiz feature tracks statistics on every user and tailors a 5 question mini quiz to the individual user with the words they are having the most trouble with.
 
 <img width=600 src="https://github.com/Snackman8/VocabTrainer/raw/main/docs/ChooseQuiz.png">
