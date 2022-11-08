@@ -38,6 +38,8 @@ The recommended usage for a live site is to use the GoogleOAuth2 authentication 
 
 `python3 vocabTrainer_app.py -- auth_method GoogleOAuth2 --oauth2_clientid client123 --oauth2_secret secret123 --oauth2_redirect_url https://www.somedomain.com`
 
+The application runs on port 8300.  To access the application once running, open `http://localhost:8300` in a Chrome browser.
+
 ## Usage information
 
 <pre>
