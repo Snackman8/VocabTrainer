@@ -28,6 +28,12 @@ To download the code, use the following command
 
 `git clone https://github.com/Snackman8/VocabTrainer`
 
+### Install Dependencies
+<pre>
+cd VocabTrainer
+pip3 install -r requirements.txt
+</pre>
+
 ## Run the Application
 
 To run with the application using developer authentication, use the command below (not recommended for live sites on the internet)
@@ -58,3 +64,9 @@ optional arguments:
   --verbosity VERBOSITY
                         increase output verbosity
 </pre>
+
+## Backup application Data
+
+All application specific data is stored in the ./data directory.  Simply backup this directory and restore this directory to a new install of VocabTrainer.
+
+`VocabTrainer/data`
