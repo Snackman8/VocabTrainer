@@ -8,6 +8,16 @@ The Adaptive Mini Quiz feature tracks statistics on every user and tailors a 5 q
 
 <img width=600 src="https://github.com/Snackman8/VocabTrainer/raw/main/docs/TakeQuiz.png">
 
+## Install Prerequisites
+
+VocabTrainer depends on pylinkjs.  Since both projects are evolving quickly, pylinkjs has not been uploaded to pypi.  To install pylink js please perform the following commands to install from source
+
+<pre>
+git clone https://github.com/Snackman8/pyLinkJS
+cd pyLinkJS
+pip3 install .
+</pre>
+
 ## Download the Code
 
 To download the code, use the following command
