@@ -11,7 +11,9 @@ The Adaptive Mini Quiz feature tracks statistics on every user and tailors a 5 q
 ## Install Prerequisites
 
 VocabTrainer depends on pyLinkJS.
+
 Since both projects are evolving quickly, pylinkjs has not been uploaded to pypi.
+
 To install pyLinkJS please perform the following commands to install from source
 
 <pre>
