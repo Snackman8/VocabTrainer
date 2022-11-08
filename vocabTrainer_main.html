@@ -71,6 +71,17 @@
             $('#quiz_stats').html(html);
         }
     </script>
+
+    <style>
+        #answer {
+            font-size: 32px;
+        }
+        @media (max-width:576px){
+        #answer {
+            font-size: 20px;
+        }
+    }
+    </style>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -164,16 +175,16 @@
             <!-- header and title -->
             <h5 class="card-header text-bg-success p-3">Taking Quiz</h5>
             <!-- question and answer -->
-            <div class="row border rounded m-5 mb-0 p-3 pb-0 pt-0 mt-3">
-                <div class="col-md-4"><img class="img-fluid p-1" src="burrito.png"></div>
-                <div class="col-md-8 pt-3">
+            <div class="row border rounded m-0 mb-0 p-3 pb-0 pt-0 mt-3 m-sm-5">
+                <div class="col-md-4 d-none d-sm-block"><img class="img-fluid p-1" src="burrito.png"></div>
+                <div class="col-md-8 pt-1 pt-sm-3">
                     <div id='QuestionAndAnswer'>
                         <h3>Question</h3>
                         <div class="ms-2 fs-3 text-secondary" id=question>Question goes here</div>
-                        <h3 class="mt-5">Answer</h3>
-                        <input class="form-control ms-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" style="font-size: 32px;" autocomplete="off">
+                        <h3 class="mt-1 mt-sm-5">Answer</h3>
+                        <input class="form-control ms-2 pt-0 pb-0 pt-sm-2 pb-sm-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" autocomplete="off">
                         <!-- Alert -->
-                        <h4 class="alert alert-danger text-center m-0 mb-3 mt-3 p-2" id=alert style="visibility:hidden">Alert</h4>
+                        <h4 class="alert alert-danger text-center p-0 m-0 mt-2 ms-2 mb-sm-3 mt-sm-3 p-sm-2" id=alert style="visibility:hidden">Alert</h4>
                     </div>
                     <div id='QuestionsFinished' style="display:none">
                         <h5 class="mt-4 mb-4 text-center" id=Finished_Stats>Finished Stats</h5>
