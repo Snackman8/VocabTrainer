@@ -226,6 +226,7 @@ def selectionChanged(jsc, quiz_id, user_id):
 
     if quiz_id is not None:
         jsc['#quiz_stats_label'].html = 'Quiz Stats for ' + model.get_quiz(quiz_id)['name']
+    json_data = json_data.replace("'", "\\'")
     jsc.eval_js_code(f"""populate_quiz_stats('{json_data}')""")
 
 
