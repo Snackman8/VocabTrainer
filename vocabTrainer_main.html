@@ -162,6 +162,10 @@
             <!-- text area -->
             <div class="row col-md-10 mx-auto mt-1">
                  <textarea class="form-control" rows="15"></textarea>
+                 <div>
+                 <input class="form-check-input" type="checkbox" value="" id="chkCaseSensitive">
+                 <label class="form-check-label">Case Sensitive</label>
+                 </div>
             </div>
             <!-- buttons -->
             <div class='row mt-3 mb-4'>
@@ -182,7 +186,10 @@
                         <h3>Question</h3>
                         <div class="ms-2 fs-3 text-secondary" id=question>Question goes here</div>
                         <h3 class="mt-1 mt-sm-5">Answer</h3>
+                        <div class="input-group">
                         <input class="form-control ms-2 pt-0 pb-0 pt-sm-2 pb-sm-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" autocomplete="off">
+                        <button class='btn btn-success ms-3' onclick="call_py('paneTakingQuiz.skip');" id=btn_skip>Skip</button>
+                        </div>
                         <!-- Alert -->
                         <h4 class="alert alert-danger text-center p-0 m-0 mt-2 ms-2 mb-sm-3 mt-sm-3 p-sm-2" id=alert style="visibility:hidden">Alert</h4>
                     </div>

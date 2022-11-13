@@ -179,7 +179,7 @@ def newQuizSave(jsc, quiz_id, user_id):
                         body=quiz_name_problems)
     else:
         # create the new quiz
-        new_quiz_id = model.set_quiz(None, user_id, new_quiz_name, '')
+        new_quiz_id = model.set_quiz(None, user_id, new_quiz_name, '', 0)
 
         # show the quizzes available pane to repopulate the quiz selection box
         jsc.show_pane('paneChooseQuiz')

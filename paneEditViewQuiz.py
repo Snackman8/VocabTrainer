@@ -49,6 +49,8 @@ def init_pane(jsc, quiz_id, user_id):
 
     # set the data for the quiz
     jsc['#paneEditViewQuiz textarea'].val = quiz['data']
+    jsc['#chkCaseSensitive'].prop.checked = (quiz['flags'] & model.FLAG_CASE_SENSITIVE) != 0
+
 
     # disable the Save button if needed
     jsc['#paneEditViewQuiz button:contains("Save")'].prop.disabled = not model.is_quiz_owner(quiz_id, user_id)
@@ -68,6 +70,9 @@ def saveEdit(jsc, quiz_id, user_id):
     """ Handler for when the Save button of the Edit / View Quiz Pane is clicked """
     # save the edited quiz
     new_quiz_data = jsc['#paneEditViewQuiz textarea'].val
+    flags = 0
+    if jsc['#chkCaseSensitive'].prop.checked:
+        flags = flags | model.FLAG_CASE_SENSITIVE
     quiz_problems = _validate_quiz_data(new_quiz_data)
     if quiz_problems is not None:
         # show the problems with the quiz data
@@ -75,5 +80,5 @@ def saveEdit(jsc, quiz_id, user_id):
                         body=quiz_problems)
     else:
         quiz = model.get_quiz(quiz_id)
-        model.set_quiz(quiz_id, user_id, quiz['name'], new_quiz_data)
+        model.set_quiz(quiz_id, user_id, quiz['name'], new_quiz_data, flags=flags)
         jsc.show_pane('paneChooseQuiz')

@@ -8,6 +8,12 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 
 # ==================================================
+#    Constants
+# ==================================================
+FLAG_CASE_SENSITIVE = 1
+
+
+# ==================================================
 #    Exceptions
 # ==================================================
 class DisplayNameExistsException(Exception):
@@ -213,10 +219,10 @@ def is_quiz_owner(quiz_id, user_id):
     return quiz.first().owner_user_id == user_id
 
 
-def set_quiz(quiz_id, owner_user_id, name, data):
+def set_quiz(quiz_id, owner_user_id, name, data, flags):
     session = Session()
     if quiz_id is None:
-        quiz = Quiz(owner_user_id = owner_user_id, data=data, name=name)
+        quiz = Quiz(owner_user_id = owner_user_id, data=data, name=name, flags=flags)
         session.add(quiz)
         session.flush()
         quiz_id = quiz.quiz_id
@@ -229,6 +235,8 @@ def set_quiz(quiz_id, owner_user_id, name, data):
             d['name'] = name
         if data is not None:
             d['data'] = data
+        if flags is not None:
+            d['flags'] = flags
         quizzes.update(d)
     session.commit()
 
@@ -307,12 +315,16 @@ Session = None
 # --------------------------------------------------
 #    ORM Classes
 # --------------------------------------------------
+# alter table quiz add flags integer default 0;
+# create table quiz2 as select quiz_id, owner_user_id,data,name from quiz;
+# alter table quiz2 rename to quiz;
 class Quiz(Base):
     __tablename__ = "quiz"
     quiz_id = Column(Integer, primary_key=True)
     owner_user_id = Column(Integer, ForeignKey("users.user_id"))
     data = Column(String)
     name = Column(String)
+    flags = Column(Integer)
 
     def __repr__(self):
         return '<Quiz(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['quiz_id', 'owner_user_id', 'name', 'data']]) + ')>'

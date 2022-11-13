@@ -44,7 +44,16 @@ def check_answer(jsc, quiz_id, user_id):
     question = jsc.tag["QUESTIONS_REMAINING"][0][0]
     answer = jsc.tag["QUESTIONS_REMAINING"][0][1]
     jsc['#alert'].html = answer
-    if user_answer.strip().lower() == jsc.tag["QUESTIONS_REMAINING"][0][1].strip().lower():
+
+    # check for correctness based on flags
+    correct = False
+    if jsc.tag["QUIZ_FLAGS"] & model.FLAG_CASE_SENSITIVE:
+        correct = user_answer.strip() == jsc.tag["QUESTIONS_REMAINING"][0][1].strip()
+    else:
+        correct = user_answer.strip().lower() == jsc.tag["QUESTIONS_REMAINING"][0][1].strip().lower()
+
+    # handle correct or incorrect
+    if correct:
         # answer is correct, so hide the alert
         jsc['#alert'].css.visibility = 'hidden'
 
@@ -102,6 +111,11 @@ def next_question(jsc):
     """ setup the UI to show the next question """
     jsc['#question'].html = jsc.tag["QUESTIONS_REMAINING"][0][0]
     jsc['#answer'].val= ''
+    jsc['#btn_skip'].html = f'Skip ({jsc.tag["SKIPS_LEFT"]})'
+    if jsc.tag["SKIPS_LEFT"] > 0:
+        jsc['#btn_skip'].prop.disabled = ''
+    else:
+        jsc['#btn_skip'].prop.disabled = 'true'
 
     # refresh the progress bar!
     refresh_progress_bar(jsc)
@@ -200,6 +214,8 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     jsc.tag["CORRECT"] = 0
     jsc.tag["WRONG"] = 0
     jsc.tag["REMEDIAL"] = 0
+    jsc.tag["QUIZ_FLAGS"] = quiz['flags']
+    jsc.tag["SKIPS_LEFT"] = max(1, int(len(jsc.tag['QUESTIONS_REMAINING']) / 10))
 
     # call next question to show the first question
     next_question(jsc)
@@ -209,3 +225,11 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
 def finished(jsc, quiz_id, user_id):
     """ handler for the OK button shown when the quiz is finished """
     jsc.show_pane('paneChooseQuiz')
+
+
+@inject_quiz_id_user_id
+def skip(jsc, quiz_id, user_id, **kwargs):
+    jsc.tag["SKIPS_LEFT"] = jsc.tag["SKIPS_LEFT"] - 1
+    q = jsc.tag['QUESTIONS_REMAINING'].pop(0)
+    jsc.tag['QUESTIONS_REMAINING'].append(q)
+    next_question(jsc)
