@@ -62,19 +62,14 @@ def change_display_name_ok(jsc):
 def ready(jsc, *args):
     """ called when a webpage creates a new connection the first time on load """
     # show login button or user dropdown
-    logging.info('ready')
     if jsc.user_auth_username is not None:
-        logging.info('ready-1')
         # retrieve the user
         user_id = model.get_user_id(jsc.user_auth_username, jsc.user_auth_method)
-        logging.info('ready-2')
         if user_id is None:
-            logging.info('ready-3')
             # create new user since this user does not exist
             # loop to avoid display_name collisions
             suffix = 0
             while True:
-                logging.info('ready-4')
                 display_name = jsc.user_auth_username.strip()
                 if suffix != 0:
                     display_name = f"{display_name}{suffix}"
@@ -86,31 +81,25 @@ def ready(jsc, *args):
                     pass
 
         # retrieve the display name
-        logging.info('ready-5')
         display_name = model.get_user_props(user_id)['display_name']
         if display_name != jsc.user_auth_username:
             display_name = display_name + f" ({jsc.user_auth_username})"
 
         # show the correct dropdown
-        logging.info('ready-6')
         jsc['#userdropdown'].css.display = 'block'
         jsc['#login_button'].css.display = 'none'
         jsc['#userdropdown button span'].html = display_name
         jsc['#btn_New_Quiz'].prop.disabled = ''
     else:
-        logging.info('ready-7')
         jsc['#userdropdown'].css.display = 'none'
         jsc['#login_button'].css.display = 'block'
         jsc['#btn_New_Quiz'].prop.disabled = 'true'
 
     # disable the edit and delete buttons
-    logging.info('ready-8')
     jsc['#btn_Delete_Quiz'].prop.disabled = 'true'
 
     # show the first pane
-    logging.info('ready-9')
     jsc.show_pane('paneChooseQuiz')
-    logging.info('ready-10')
 
 
 def reconnect(jsc, *args):
