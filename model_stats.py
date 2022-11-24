@@ -2,9 +2,21 @@
 #    Imports
 # --------------------------------------------------
 import datetime
+from enum import Enum
 import pandas as pd
 from model import engine, Base, Quiz, Session
 from sqlalchemy import func, Column, DateTime, ForeignKey, Integer, String
+
+
+# ==================================================
+#    Enumerations
+# ==================================================
+class ActivityId(Enum):
+    QUIZ_START = 'QUIZ_START'
+    QUIZ_START_MINI = 'QUIZ_START_MINI'
+    QUIZ_END = 'QUIZ_END'
+    QUIZ_QUESTION_CORRECT = 'QUIZ_QUESTION_CORRECT'
+    QUIZ_QUESTION_INCORRECT = 'QUIZ_QUESTION_INCORRECT'
 
 
 # ==================================================
@@ -26,6 +38,27 @@ def add_quiz_score(quiz_id, user_id, quiz_type, correct, total):
     session = Session()
     quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key=quiz_type, value=f'{correct}/{total}')
     session.add(quiz_stat)
+    session.commit()
+
+
+def add_quiz_activity_stat(quiz_id, user_id, quiz_uid, question, activityId):
+    """ add a new quiz question stat for the user
+
+        Args:
+            quiz_id - id of the quiz to save the stat for
+            user_id - id of the user to save the stat for
+            quiz_uid - uid of the current quiz being taken
+            question - question to save state for
+            activityId - See ActivityId enum
+    """
+    # special case for guest
+    if user_id is None:
+        user_id = 0
+
+    # add a new record
+    session = Session()
+    quiz_activity = QuizActivity(quiz_id=quiz_id, user_id=user_id, quiz_uid=quiz_uid, key=question, value=0, stat_type=activityId.value)
+    session.add(quiz_activity)
     session.commit()
 
 
@@ -143,27 +176,40 @@ def get_quiz_question_stats(quiz_id, user_id):
 
 def get_user_activity(user_id):
     session = Session()
-    start_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=3)
+    start_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=12)
     start_date = datetime.datetime(start_date.year, start_date.month, start_date.day, start_date.hour, start_date.minute, 0)
-    end_date = start_date + datetime.timedelta(hours=3, minutes=1)
+    end_date = start_date + datetime.timedelta(hours=12)
     if user_id is None:
-        quiz_stats = session.query(QuizStat).filter(QuizStat.stat_type=='QUIZ_QUESTION', QuizStat.time_created >= start_date)
+        quiz_activity = session.query(QuizActivity, Quiz).join(QuizActivity, Quiz.quiz_id == QuizActivity.quiz_id).filter(QuizActivity.time_created >= start_date)
     else: 
-        quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.stat_type=='QUIZ_QUESTION',
-                                                    QuizStat.time_created >= start_date)
-    time_created = []
-    for qs in quiz_stats.all():
-        d = datetime.datetime(qs.time_created.year, qs.time_created.month, qs.time_created.day, qs.time_created.hour, qs.time_created.minute, 0)
-        time_created.append(d)
-    df = pd.DataFrame(time_created, columns=['time_created'])
+        quiz_activity = session.query(QuizActivity, Quiz).join(QuizActivity, Quiz.quiz_id == QuizActivity.quiz_id).filter(QuizActivity.user_id == user_id, QuizActivity.time_created >= start_date)
+
+    data = []
+    for qs in quiz_activity.all():
+        d = datetime.datetime(qs.QuizActivity.time_created.year, qs.QuizActivity.time_created.month, qs.QuizActivity.time_created.day, qs.QuizActivity.time_created.hour, qs.QuizActivity.time_created.minute, 0)
+        data.append([d, qs.QuizActivity.stat_type, qs.QuizActivity.quiz_uid, qs.Quiz.name])
+        # time_created.append(d)
+        # quiz_stat_type.append(qs.stat_type)
+    df = pd.DataFrame(data, columns=['time_created', 'stat_type', 'quiz_uid', 'quiz_name'])
     df['time_created']= pd.to_datetime(df['time_created'])
+    
+    # compute the answers per minute
     df['activity'] = 1
-    ser = df.groupby('time_created').sum()
+    df_activity = df[df['stat_type'].isin(["QUIZ_QUESTION_CORRECT", "QUIZ_QUESTION_INCORRECT"])]
+    ser = df_activity.groupby('time_created')['activity'].sum(numeric_only=True)
     ser = ser.sort_index()
     all_minutes_index = pd.date_range(start_date, end_date, freq='min')
     ser = ser.reindex(all_minutes_index, fill_value=0)
+
+    # compute the quiz start and end times
+    quiz_uids = df['quiz_uid'].unique()
+    quiz_info = []
+    for quid in quiz_uids:
+        start = df[df['quiz_uid'] == quid].iloc[0]
+        end = df[df['quiz_uid'] == quid].iloc[-1]
+        quiz_info.append([start.time_created, end.time_created, start.quiz_name])
     
-    return ser
+    return ser, quiz_info
     
 
 # --------------------------------------------------
@@ -182,6 +228,22 @@ class QuizStat(Base):
 
     def __repr__(self):
         return '<QuizStat(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['quiz_stat_id', 'quiz_id', 'user_id', 'stat_type', 'time_created', 'key', 'value']]) + ')>'
+
+
+class QuizActivity(Base):
+    __tablename__ = "quiz_activity"
+    quiz_activity_id = Column(Integer, primary_key=True)
+    quiz_id = Column(Integer, ForeignKey("quiz.quiz_id"))
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+    quiz_uid = Column(Integer)
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    time_updated = Column(DateTime(timezone=True), onupdate=func.now())
+    stat_type = Column(String)
+    key = Column(String)
+    value = Column(String)
+
+    def __repr__(self):
+        return '<QuizActivity(' + ','.join([f"""{x}={getattr(self, x)}""" for x in ['quiz_activity_id', 'quiz_id', 'user_id', 'quiz_uid', 'stat_type', 'time_created', 'key', 'value']]) + ')>'
 
 
 # --------------------------------------------------

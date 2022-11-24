@@ -15,7 +15,11 @@
     <!-- moment.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js"></script>
     <!-- chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.3.0/Chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-moment/1.0.1/chartjs-adapter-moment.min.js" integrity="sha512-hVy4KxCKgnXi2ok7rlnlPma4JHXI1VPQeempoaclV1GwRHrDeaiuS1pI6DVldaj5oh6Opy2XJ2CTljQLPkaMrQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.1.0/chartjs-plugin-annotation.min.js" integrity="sha512-1uGDhRiDlpOPrTi54rJHu3oBLizqaadZDDft+j4fVeFih6eQBeRPJuuP3JcxIqJxIjzOmRq57XwwO4FT+/owIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.0/chartjs-plugin-zoom.min.js" integrity="sha512-B6F98QATBNaDHSE7uANGo5h0mU6fhKCUD+SPAY7KZDxE8QgZw9rewDtNiu3mbbutYDWOKT3SPYD8qDBpG2QnEg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
         function key(ele) {
@@ -250,25 +254,39 @@
 
 <script>
     var activity_chart = {};
-    
-    function init_chart(chart, options) {
-        var ctx = document.getElementById(chart).getContext('2d');
-        c = new Chart(ctx, options);
-        activity_chart[chart] = c;
-    }
-    
-    function update_chart(chart, data) {
+
+    function update_chart(chart, options) {
+        // destroy existing chart if needed
+        if (chart in activity_chart) {
+            activity_chart[chart].destroy();
+            delete activity_chart[chart];
+        }
+
         // convert the labels to proper time zone
         labels = [];
-        for (var i = 0; i < data.labels.length; i++) {
-            m = moment.utc(data.labels[i]);
-            s = moment(m).local(); //.format('H:m');
-            labels.push(s);
-            
+        for (var i = 0; i < options.data.labels.length; i++) {
+            m = moment.utc(options.data.labels[i]);
+            options.data.labels[i] = moment(m).local();
         }
-        data.labels = labels;
-        activity_chart[chart].config.data = data;
-        activity_chart[chart].update();
+
+        // convert the annotations to proper time zone
+        keys = Object.keys(options.options.plugins.annotation.annotations);
+        for (var i = 0; i < keys.length; i++) {
+            m = moment.utc(options.options.plugins.annotation.annotations[keys[i]].xMin);
+            options.options.plugins.annotation.annotations[keys[i]].xMin = m.local();
+            m = moment.utc(options.options.plugins.annotation.annotations[keys[i]].xMax);
+            options.options.plugins.annotation.annotations[keys[i]].xMax = m.local();
+        }
+
+        console.log(options.options.scales.xAxis.min);
+
+        m = moment.utc(options.options.scales.xAxis.min);
+        options.options.scales.xAxis.min = moment(m).local();
+        console.log(options.options.scales.xAxis.min);
+
+        // reinitialize the chart
+        var ctx = document.getElementById(chart).getContext('2d');
+        activity_chart[chart] = new Chart(ctx, options);
     }
 </script>
 

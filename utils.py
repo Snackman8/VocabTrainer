@@ -20,40 +20,58 @@ def inject_quiz_id_user_id(func):
     return wrapper
 
 
-def init_activity_chart(jsc, chart_name):
+def refresh_activity_chart(jsc, chart_name, user_id):
+
+    activity, quiz_info = model_stats.get_user_activity(user_id)
+
     options = {'type': 'line',
                'data': {
-                   'labels': [''],
+                   'labels': list(activity.index.strftime('%Y-%m-%d %H:%M:%S')),
                    'datasets': [{
-                       'label': 'x',
-                       'data': [1]}]},
+                       'label': 'Answers / Min',
+                       'data': list(activity),
+                       'borderWidth': 1}]},
                'options': {
+                   'animation': 0,
                    'scales': {
-                       'xAxes': [{'type': 'time',
+                       'xAxis': {'type': 'time',
                                   'time': {
                                       'tooltipFormat': 'YYYY-MM-DD HH:mm',
                                       'displayFormats': {'minute': 'HH:mm'}
                                       },
+                                  'min': list(activity.index.strftime('%Y-%m-%d %H:%M:%S'))[-120],
                                   'ticks': {
                                       'minRotation': 30,
                                       'autoSkip': 1,
-                                      'maxTicksLimit': 12}}],
-                       'yAxes': [{'ticks': {'reverse': 0}}]
-                       }
+                                      'maxTicksLimit': 12}},
+                       'yAxis': {'min': 0,
+                           'ticks': {'reverse': 0,
+                                            'beginAtZero': 1,
+                                            'stepSize': 1}}
+                       },
+                   'plugins': {
+                       'autocolors': 0,
+                       'annotation': {},
+                    'zoom': {
+                        'pan': {'mode': 'x', 'enabled': 1},
+                        'zoom': {'mode': 'x', 'wheel': {'enabled': 1,}},
+                        }
+                    }
                    }
                }
-    jsc.eval_js_code(f"""init_chart('{chart_name}', {options});""")
 
-def refresh_activity_chart(jsc, chart_name, user_id):
-
-    activity = model_stats.get_user_activity(user_id)
-
-
-    data = {'labels': list(activity.index.strftime('%Y-%m-%d %H:%M:%S')),
-            'datasets': [{
-                'label': 'Answers / Min',
-                'data': list(activity['activity']),
-                'borderWidth': 1}]
-            }
-
-    jsc.eval_js_code(f"""update_chart('{chart_name}', {data});""")
+    annotations = {}
+    for i, qi in enumerate(quiz_info):
+        if i % 2:
+            background_color = 'rgba(64, 64, 200, 0.25)'
+        else:
+            background_color = 'rgba(64, 200, 64, 0.25)'
+        
+        annotations[f'box{i}'] = {'type': 'box',
+                                  'xMin': qi[0].strftime('%Y-%m-%d %H:%M:%S'),
+                                  'xMax': qi[1].strftime('%Y-%m-%d %H:%M:%S'),
+                                  'backgroundColor': background_color,
+                                  'borderWidth': 0}
+    options['options']['plugins']['annotation']['annotations'] = annotations
+    
+    jsc.eval_js_code(f"""update_chart('{chart_name}', {options});""")

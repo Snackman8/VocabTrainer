@@ -6,10 +6,12 @@
 #    Imports
 # --------------------------------------------------
 import logging
+import random
+import sys
 import model
 import model_stats
 import random
-from utils import inject_quiz_id_user_id, init_activity_chart, refresh_activity_chart
+from utils import inject_quiz_id_user_id, refresh_activity_chart
 
 
 # --------------------------------------------------
@@ -70,6 +72,8 @@ def check_answer(jsc, quiz_id, user_id):
         else:
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] - 1
 
+        # update activity stats
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], question, model_stats.ActivityId.QUIZ_QUESTION_CORRECT)                
     else:
         # answer is wrong, so show the alert
         jsc['#alert'].css.visibility = ''
@@ -91,6 +95,9 @@ def check_answer(jsc, quiz_id, user_id):
         jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"].add(question)
         jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
 
+        # update activity stats
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], question, model_stats.ActivityId.QUIZ_QUESTION_INCORRECT)                
+
     # refresh the progress bar
     refresh_progress_bar(jsc)
 
@@ -105,6 +112,7 @@ def check_answer(jsc, quiz_id, user_id):
 
         # update the stats
         model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'])
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_END)        
 
     # refresh the activity chart    
     refresh_activity_chart(jsc, 'activitychart_taking', user_id)
@@ -153,8 +161,10 @@ def refresh_progress_bar(jsc):
 @inject_quiz_id_user_id
 def init_pane(jsc, quiz_id, user_id, **kwargs):
     # init the activity chart    
-    init_activity_chart(jsc, 'activitychart_taking')
     refresh_activity_chart(jsc, 'activitychart_taking', user_id)
+    
+    # init a quiz_uid
+    jsc.tag['QUIZ_UID'] = random.randint(0, sys.maxsize)
     
     # show the questions and answer card
     jsc['#QuestionAndAnswer'].css.display = 'block'
@@ -223,6 +233,12 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     jsc.tag["REMEDIAL"] = 0
     jsc.tag["QUIZ_FLAGS"] = quiz['flags']
     jsc.tag["SKIPS_LEFT"] = max(1, int(len(jsc.tag['QUESTIONS_REMAINING']) / 10))
+
+    # start the quiz stat
+    if jsc.tag['QUIZ_TYPE'] == 'Mini':
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_START_MINI)
+    else:
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_START)
 
     # call next question to show the first question
     next_question(jsc)
