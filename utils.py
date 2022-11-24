@@ -37,11 +37,10 @@ def refresh_activity_chart(jsc, chart_name, user_id):
                        'xAxis': {'type': 'time',
                                   'time': {
                                       'tooltipFormat': 'YYYY-MM-DD HH:mm',
-                                      'displayFormats': {'minute': 'HH:mm'}
+                                      'displayFormats': {'minute': 'HH:mm', 'second': 'HH:mm'}
                                       },
                                   'min': list(activity.index.strftime('%Y-%m-%d %H:%M:%S'))[-120],
                                   'ticks': {
-                                      'minRotation': 30,
                                       'autoSkip': 1,
                                       'maxTicksLimit': 12}},
                        'yAxis': {'min': 0,
@@ -53,6 +52,8 @@ def refresh_activity_chart(jsc, chart_name, user_id):
                        'autocolors': 0,
                        'annotation': {},
                     'zoom': {
+                        'limits': {'x': {'min': list(activity.index.strftime('%Y-%m-%d %H:%M:%S'))[0],
+                                         'max': list(activity.index.strftime('%Y-%m-%d %H:%M:%S'))[-1]}},
                         'pan': {'mode': 'x', 'enabled': 1},
                         'zoom': {'mode': 'x', 'wheel': {'enabled': 1,}},
                         }
@@ -71,7 +72,9 @@ def refresh_activity_chart(jsc, chart_name, user_id):
                                   'xMin': qi[0].strftime('%Y-%m-%d %H:%M:%S'),
                                   'xMax': qi[1].strftime('%Y-%m-%d %H:%M:%S'),
                                   'backgroundColor': background_color,
-                                  'borderWidth': 0}
+                                  'borderWidth': 0,
+                                  'label': {'content': qi[2], 'display': 1, 'rotation': -90,
+                                            'font': {'size': 12}}}
     options['options']['plugins']['annotation']['annotations'] = annotations
     
     jsc.eval_js_code(f"""update_chart('{chart_name}', {options});""")

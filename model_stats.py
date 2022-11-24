@@ -207,7 +207,10 @@ def get_user_activity(user_id):
     for quid in quiz_uids:
         start = df[df['quiz_uid'] == quid].iloc[0]
         end = df[df['quiz_uid'] == quid].iloc[-1]
-        quiz_info.append([start.time_created, end.time_created, start.quiz_name])
+        quiz_name = start.quiz_name
+        if start.stat_type == ActivityId.QUIZ_START_MINI.value:
+            quiz_name = quiz_name + ' (M)'
+        quiz_info.append([start.time_created, end.time_created, quiz_name])
     
     return ser, quiz_info
     

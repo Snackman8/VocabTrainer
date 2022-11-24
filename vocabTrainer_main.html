@@ -161,7 +161,7 @@
                 <button class='btn btn-danger  col-md-2 ms-3' onclick="call_py('paneChooseQuiz.deleteQuiz');" id=btn_Delete_Quiz>Delete Quiz</button>
             </div>
             <h5 class='text-center'>All User Activity</h5>
-            <canvas id="activitychart_choose" width="600" height="100"></canvas>
+            <canvas id="activitychart_choose" width="600" height="200"></canvas>
             
         </div>
 
@@ -220,7 +220,7 @@
                 </div>
             </div>
             <h5 class='text-center'>All User Activity</h5>
-            <canvas id="activitychart_taking" width="600" height="100"></canvas>        
+            <canvas id="activitychart_taking" width="600" height="200"></canvas>        
         </div>        
     </div>
 
@@ -278,11 +278,13 @@
             options.options.plugins.annotation.annotations[keys[i]].xMax = m.local();
         }
 
-        console.log(options.options.scales.xAxis.min);
-
         m = moment.utc(options.options.scales.xAxis.min);
         options.options.scales.xAxis.min = moment(m).local();
-        console.log(options.options.scales.xAxis.min);
+
+        m = moment.utc(options.options.plugins.zoom.limits.x.min);
+        options.options.plugins.zoom.limits.x.min = m.local();
+        m = moment.utc(options.options.plugins.zoom.limits.x.max);
+        options.options.plugins.zoom.limits.x.max = m.local();
 
         // reinitialize the chart
         var ctx = document.getElementById(chart).getContext('2d');
