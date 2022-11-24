@@ -199,7 +199,8 @@
                         <h3 class="mt-1 mt-sm-5">Answer</h3>
                         <div class="input-group">
                         <input class="form-control ms-2 pt-0 pb-0 pt-sm-2 pb-sm-2" id="answer" placeholder="Type Answer Here" onkeydown="key(this)" autocomplete="off">
-                        <button class='btn btn-success ms-3' onclick="call_py('paneTakingQuiz.skip');" id=btn_skip>Skip</button>
+                        <button class='btn btn-success ms-3 rounded' onclick="call_py('paneTakingQuiz.check_answer');" >OK</button>
+                        <button class='btn btn-warning ms-3 rounded' onclick="call_py('paneTakingQuiz.skip');" id=btn_skip>Skip</button>
                         </div>
                         <!-- Alert -->
                         <h4 class="alert alert-danger text-center p-0 m-0 mt-2 ms-2 mb-sm-3 mt-sm-3 p-sm-2" id=alert style="visibility:hidden">Alert</h4>
