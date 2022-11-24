@@ -30,23 +30,33 @@ def refresh_activity_chart(jsc, chart_name, user_id):
                    'datasets': [{
                        'label': 'Answers / Min',
                        'data': list(activity),
-                       'borderWidth': 1}]},
+                       'borderColor': '#55bae7',
+                       'backgroundColor': '#55bae7',
+                       'pointBackgroundColor': "#55bae7",
+                       'pointBorderColor': "#55bae7",
+                       'pointHoverBackgroundColor': "#55bae7",
+                       'pointHoverBorderColor': "#55bae7",
+                       'pointRadius': 4,
+                       'borderWidth': 2}]},
                'options': {
                    'animation': 0,
                    'scales': {
                        'xAxis': {'type': 'time',
-                                  'time': {
-                                      'tooltipFormat': 'YYYY-MM-DD HH:mm',
-                                      'displayFormats': {'minute': 'HH:mm', 'second': 'HH:mm'}
-                                      },
-                                  'min': list(activity.index.strftime('%Y-%m-%d %H:%M:%S'))[-120],
-                                  'ticks': {
-                                      'autoSkip': 1,
-                                      'maxTicksLimit': 12}},
+                                 'time': {
+                                     'tooltipFormat': 'YYYY-MM-DD HH:mm',
+                                     'displayFormats': {'minute': 'HH:mm', 'second': 'HH:mm'}},
+                                 'min': list(activity.index.strftime('%Y-%m-%d %H:%M:%S'))[-120],
+                                 'grid': {'display': 1,
+                                          'color': 'rgba(230, 230, 230, 0.5)'},
+                                 'ticks': {
+                                     'autoSkip': 1,
+                                     'maxTicksLimit': 12}},
                        'yAxis': {'min': 0,
-                           'ticks': {'reverse': 0,
-                                            'beginAtZero': 1,
-                                            'stepSize': 1}}
+                                 'grid': {'display': 1,
+                                          'color': 'rgba(230, 230, 230, 0.5)'},
+                                 'ticks': {'reverse': 0,
+                                           'beginAtZero': 1,
+                                           'stepSize': 1}}
                        },
                    'plugins': {
                        'autocolors': 0,

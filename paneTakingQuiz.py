@@ -77,7 +77,7 @@ def check_answer(jsc, quiz_id, user_id):
     else:
         # answer is wrong, so show the alert
         jsc['#alert'].css.visibility = ''
-        jsc['#alert'].html = f'Wrong!  {answer}'
+        jsc['#alert'].html = f'Incorrect!  {answer}<br>Your Answer: {user_answer}'
 
         # add another copy of this question to the end of the stack
         jsc.tag['QUESTIONS_REMAINING'].append([question, answer])
