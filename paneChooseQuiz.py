@@ -10,7 +10,7 @@ import functools
 import json
 import model
 import model_stats
-from utils import inject_quiz_id_user_id
+from utils import inject_quiz_id_user_id, init_activity_chart, refresh_activity_chart
 
 
 # --------------------------------------------------
@@ -44,6 +44,12 @@ def _validate_quiz_name(user_id, quiz_name):
 @inject_quiz_id_user_id
 def init_pane(jsc, quiz_id, user_id):
     """ called by the appSinglePageAppPlugin framework to handle initialization of this pane """
+    
+    # init the activity chart    
+    init_activity_chart(jsc, 'activitychart_choose')
+    refresh_activity_chart(jsc, 'activitychart_choose', user_id)
+
+    # get quiz info    
     quiz_ids = model.get_quiz_ids(None)
     quizzes = model.get_quizzes(quiz_ids, ['name', 'owner_user_name', 'owner_user_id'])
 

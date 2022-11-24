@@ -9,7 +9,7 @@ import logging
 import model
 import model_stats
 import random
-from utils import inject_quiz_id_user_id
+from utils import inject_quiz_id_user_id, init_activity_chart, refresh_activity_chart
 
 
 # --------------------------------------------------
@@ -106,6 +106,9 @@ def check_answer(jsc, quiz_id, user_id):
         # update the stats
         model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'])
 
+    # refresh the activity chart    
+    refresh_activity_chart(jsc, 'activitychart_taking', user_id)
+
 
 def next_question(jsc):
     """ setup the UI to show the next question """
@@ -149,6 +152,10 @@ def refresh_progress_bar(jsc):
 # --------------------------------------------------
 @inject_quiz_id_user_id
 def init_pane(jsc, quiz_id, user_id, **kwargs):
+    # init the activity chart    
+    init_activity_chart(jsc, 'activitychart_taking')
+    refresh_activity_chart(jsc, 'activitychart_taking', user_id)
+    
     # show the questions and answer card
     jsc['#QuestionAndAnswer'].css.display = 'block'
     jsc['#QuestionsFinished'].css.display = 'none'

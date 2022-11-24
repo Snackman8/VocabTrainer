@@ -1,6 +1,8 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import datetime
+import pandas as pd
 from model import engine, Base, Quiz, Session
 from sqlalchemy import func, Column, DateTime, ForeignKey, Integer, String
 
@@ -138,6 +140,31 @@ def get_quiz_question_stats(quiz_id, user_id):
 
     return retval
 
+
+def get_user_activity(user_id):
+    session = Session()
+    start_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=3)
+    start_date = datetime.datetime(start_date.year, start_date.month, start_date.day, start_date.hour, start_date.minute, 0)
+    end_date = start_date + datetime.timedelta(hours=3, minutes=1)
+    if user_id is None:
+        quiz_stats = session.query(QuizStat).filter(QuizStat.stat_type=='QUIZ_QUESTION', QuizStat.time_created >= start_date)
+    else: 
+        quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.stat_type=='QUIZ_QUESTION',
+                                                    QuizStat.time_created >= start_date)
+    time_created = []
+    for qs in quiz_stats.all():
+        d = datetime.datetime(qs.time_created.year, qs.time_created.month, qs.time_created.day, qs.time_created.hour, qs.time_created.minute, 0)
+        time_created.append(d)
+    df = pd.DataFrame(time_created, columns=['time_created'])
+    df['time_created']= pd.to_datetime(df['time_created'])
+    df['activity'] = 1
+    ser = df.groupby('time_created').sum()
+    ser = ser.sort_index()
+    all_minutes_index = pd.date_range(start_date, end_date, freq='min')
+    ser = ser.reindex(all_minutes_index, fill_value=0)
+    
+    return ser
+    
 
 # --------------------------------------------------
 #    ORM Classes
