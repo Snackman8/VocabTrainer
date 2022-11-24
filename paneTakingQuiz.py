@@ -232,7 +232,7 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     jsc.tag["WRONG"] = 0
     jsc.tag["REMEDIAL"] = 0
     jsc.tag["QUIZ_FLAGS"] = quiz['flags']
-    jsc.tag["SKIPS_LEFT"] = max(1, int(len(jsc.tag['QUESTIONS_REMAINING']) / 10))
+    jsc.tag["SKIPS_LEFT"] = max(1, int(len(jsc.tag['QUESTIONS_REMAINING']) / 25))
 
     # start the quiz stat
     if jsc.tag['QUIZ_TYPE'] == 'Mini':
