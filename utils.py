@@ -73,18 +73,29 @@ def refresh_activity_chart(jsc, chart_name, user_id):
 
     annotations = {}
     for i, qi in enumerate(quiz_info):
-        if i % 2:
-            background_color = 'rgba(64, 64, 200, 0.25)'
+        if qi[3] == 'GOOD':
+            if i % 2:
+                background_color = 'rgba(64, 64, 200, 0.25)'
+            else:
+                background_color = 'rgba(64, 200, 64, 0.25)'
+
+
+            annotations[f'box{i}'] = {'type': 'box',
+                                      'xMin': qi[0].strftime('%Y-%m-%d %H:%M:%S'),
+                                      'xMax': qi[1].strftime('%Y-%m-%d %H:%M:%S'),
+                                      'backgroundColor': background_color,
+                                      'borderWidth': 0,
+                                      'label': {'content': qi[2], 'display': 1, 'rotation': -90,
+                                                'font': {'size': 12}}}
         else:
-            background_color = 'rgba(64, 200, 64, 0.25)'
-        
-        annotations[f'box{i}'] = {'type': 'box',
-                                  'xMin': qi[0].strftime('%Y-%m-%d %H:%M:%S'),
-                                  'xMax': qi[1].strftime('%Y-%m-%d %H:%M:%S'),
-                                  'backgroundColor': background_color,
-                                  'borderWidth': 0,
-                                  'label': {'content': qi[2], 'display': 1, 'rotation': -90,
-                                            'font': {'size': 12}}}
+            annotations[f'box{i}'] = {'type': 'box',
+                                      'xMin': qi[0].strftime('%Y-%m-%d %H:%M:%S'),
+                                      'xMax': qi[1].strftime('%Y-%m-%d %H:%M:%S'),
+                                      'yMin': 0,
+                                      'yMax': 1,
+                                      'backgroundColor': 'rgba(255, 0, 0, 0.25)',
+                                      'borderWidth': 0}
+
     options['options']['plugins']['annotation']['annotations'] = annotations
-    
+
     jsc.eval_js_code(f"""update_chart('{chart_name}', {options});""")

@@ -174,6 +174,13 @@ def get_quiz_question_stats(quiz_id, user_id):
     return retval
 
 
+def bump_end_time(start_time, end_time):
+    if start_time == end_time:
+        return end_time + pd.Timedelta(seconds=30)
+    else:
+        return end_time
+
+
 def get_user_activity(user_id):
     session = Session()
     start_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=12)
@@ -181,7 +188,7 @@ def get_user_activity(user_id):
     end_date = start_date + datetime.timedelta(hours=12)
     if user_id is None:
         quiz_activity = session.query(QuizActivity, Quiz).join(QuizActivity, Quiz.quiz_id == QuizActivity.quiz_id).filter(QuizActivity.time_created >= start_date)
-    else: 
+    else:
         quiz_activity = session.query(QuizActivity, Quiz).join(QuizActivity, Quiz.quiz_id == QuizActivity.quiz_id).filter(QuizActivity.user_id == user_id, QuizActivity.time_created >= start_date)
 
     data = []
@@ -192,7 +199,7 @@ def get_user_activity(user_id):
         # quiz_stat_type.append(qs.stat_type)
     df = pd.DataFrame(data, columns=['time_created', 'stat_type', 'quiz_uid', 'quiz_name'])
     df['time_created']= pd.to_datetime(df['time_created'])
-    
+
     # compute the answers per minute
     df['activity'] = 1
     df_activity = df[df['stat_type'].isin(["QUIZ_QUESTION_CORRECT", "QUIZ_QUESTION_INCORRECT"])]
@@ -205,15 +212,27 @@ def get_user_activity(user_id):
     quiz_uids = df['quiz_uid'].unique()
     quiz_info = []
     for quid in quiz_uids:
-        start = df[df['quiz_uid'] == quid].iloc[0]
-        end = df[df['quiz_uid'] == quid].iloc[-1]
+        df2 = df[df['quiz_uid'] == quid]
+        start = df2.iloc[0]
+        end = df2.iloc[-1]
+
         quiz_name = start.quiz_name
         if start.stat_type == ActivityId.QUIZ_START_MINI.value:
             quiz_name = quiz_name + ' (M)'
-        quiz_info.append([start.time_created, end.time_created, quiz_name])
-    
+
+        # scan for a break that is too long
+        bad_end = None
+        if ((df2['time_created'].shift(-1) - df2['time_created']) > pd.Timedelta(minutes=2)).any():
+            bad_end = df2[(df2['time_created'].shift(-1) - df2['time_created']) > pd.Timedelta(minutes=2)].iloc[0]
+            # append the good part of the quiz
+            quiz_info.append([start.time_created, bump_end_time(start.time_created, bad_end.time_created), quiz_name, 'GOOD'])
+            # append teh bad part of the quiz
+            quiz_info.append([bad_end.time_created, bump_end_time(bad_end.time_created, end.time_created), '', 'BAD'])
+        else:
+            quiz_info.append([start.time_created, bump_end_time(start.time_created, end.time_created), quiz_name, 'GOOD'])
+
     return ser, quiz_info
-    
+
 
 # --------------------------------------------------
 #    ORM Classes
