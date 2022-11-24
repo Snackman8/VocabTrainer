@@ -39,7 +39,7 @@ def refresh_activity_chart(jsc, chart_name, user_id):
                        'pointRadius': 4,
                        'borderWidth': 2}]},
                'options': {
-                   'animation': 0,
+                   'animation': {'duration': 0},
                    'scales': {
                        'xAxis': {'type': 'time',
                                  'time': {
