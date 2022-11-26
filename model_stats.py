@@ -2,6 +2,7 @@
 #    Imports
 # --------------------------------------------------
 import datetime
+import math
 from enum import Enum
 import pandas as pd
 from model import engine, Base, Quiz, Session
@@ -22,7 +23,7 @@ class ActivityId(Enum):
 # ==================================================
 #    Model
 # ==================================================
-def add_quiz_score(quiz_id, user_id, quiz_type, correct, total):
+def add_quiz_score(quiz_id, user_id, quiz_type, correct, total, elapsed_time):
     """ add a new quiz score for the user
 
         Args:
@@ -30,13 +31,14 @@ def add_quiz_score(quiz_id, user_id, quiz_type, correct, total):
             user_id - id of the user to save the score for
             correct - number of correct answers
             total - number of questions
+            elapsed_time - total time for the quiz
     """
     # special case for guest
     if user_id is None:
         user_id = 0
 
     session = Session()
-    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key=quiz_type, value=f'{correct}/{total}')
+    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key=quiz_type, value=f'{correct}/{total} {elapsed_time}')
     session.add(quiz_stat)
     session.commit()
 
@@ -113,12 +115,22 @@ def get_quiz_scores(user_id):
     # process results
     retval = []
     for r in quiz_scores.limit(10).all():
+        elapsed_time = ''
+        try:
+            elapsed_time = int(r.QuizStat.value.partition(' ')[2])
+            elapsed_time = str(math.ceil(elapsed_time / 60)) + ' mins'
+            if elapsed_time == '1 mins':
+                elapsed_time = '1 min'
+        except:
+            elapsed_time = ''
+            
         d = {}
         d = {'name': r.Quiz.name,
              'quiz_type': r.QuizStat.key,
              'time_created': r.QuizStat.time_created,
-             'correct': int(r.QuizStat.value.partition('/')[0]),
-             'total': int(r.QuizStat.value.partition('/')[2]),
+             'correct': int(r.QuizStat.value.partition(' ')[0].partition('/')[0]),
+             'total': int(r.QuizStat.value.partition(' ')[0].partition('/')[2]),
+             'elapsed_time': elapsed_time
              }
         d['percentage'] = 0
         try:

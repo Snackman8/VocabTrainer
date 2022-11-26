@@ -8,6 +8,7 @@
 import logging
 import random
 import sys
+import time
 import model
 import model_stats
 import random
@@ -111,7 +112,8 @@ def check_answer(jsc, quiz_id, user_id):
         jsc['#Finished_Stats'].html = f"<center>Quiz Finished!<br><br>Final Score: {int((jsc.tag['CORRECT'] * 100.0 / running_total))}%"
 
         # update the stats
-        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'])
+        elapsed_time = int(time.time() - jsc.tag["START_TIME"])
+        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'], elapsed_time)
         model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_END)        
 
     # refresh the activity chart    
@@ -234,6 +236,7 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     jsc.tag["QUIZ_FLAGS"] = quiz['flags']
     # jsc.tag["SKIPS_LEFT"] = max(1, int(len(jsc.tag['QUESTIONS_REMAINING']) / 25))
     jsc.tag["SKIPS_LEFT"] = 1
+    jsc.tag["START_TIME"] = time.time()
 
     # start the quiz stat
     if jsc.tag['QUIZ_TYPE'] == 'Mini':

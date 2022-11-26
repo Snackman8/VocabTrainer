@@ -52,14 +52,15 @@
                 dt = t.toLocaleDateString() + ' ' + t.toLocaleTimeString();
 
                 html = html + '<tr>';
-                html = html + '<td style="padding-right:40px;" data-bs-toggle="tooltip" title="' + dt + '">' + data[i]['percentage'] + '%</td>';
+                html = html + '<td style="padding-right:4px;" data-bs-toggle="tooltip" title="' + dt + '">' + data[i]['percentage'] + '%</td>';
 
                 name = data[i]['name'];
                 if (data[i]['quiz_type'] != '') {
                     name = name + ' (' + data[i]['quiz_type'] + ')';
                 }
 
-                html = html + '<td style="padding-right:20px;" width=100% data-bs-toggle="tooltip" title="' + dt + '">' + name + '</td>';
+                html = html + '<td style="padding-right:4px;" width=100% data-bs-toggle="tooltip" title="' + dt + '">' + name + '</td>';
+                html = html + '<td style="padding-right:4px;"><nobr>' + data[i]['elapsed_time'] + '</nobr></td>';
                 html = html + '</tr>';
             }
             html = html + '</table>';
