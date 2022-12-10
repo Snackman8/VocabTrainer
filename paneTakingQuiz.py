@@ -130,6 +130,9 @@ def next_question(jsc):
     else:
         jsc['#btn_skip'].prop.disabled = 'true'
 
+    # force rerendering of math equations
+    jsc.eval_js_code(f"""MathJax.typeset();""")
+
     # refresh the progress bar!
     refresh_progress_bar(jsc)
 
