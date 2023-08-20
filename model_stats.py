@@ -6,7 +6,7 @@ import math
 from enum import Enum
 import pandas as pd
 from model import engine, Base, Quiz, Session
-from sqlalchemy import func, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import func, Boolean, Column, DateTime, ForeignKey, Integer, String
 
 
 # ==================================================
@@ -23,7 +23,7 @@ class ActivityId(Enum):
 # ==================================================
 #    Model
 # ==================================================
-def add_quiz_score(quiz_id, user_id, quiz_type, correct, total, elapsed_time):
+def add_quiz_score(quiz_id, user_id, quiz_type, correct, total, elapsed_time, quiz_flipped):
     """ add a new quiz score for the user
 
         Args:
@@ -32,18 +32,19 @@ def add_quiz_score(quiz_id, user_id, quiz_type, correct, total, elapsed_time):
             correct - number of correct answers
             total - number of questions
             elapsed_time - total time for the quiz
+            quiz_flipped - True if this is a flipped quiz, false otherwise
     """
     # special case for guest
     if user_id is None:
         user_id = 0
 
     session = Session()
-    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key=quiz_type, value=f'{correct}/{total} {elapsed_time}')
+    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_SCORE', key=quiz_type, value=f'{correct}/{total} {elapsed_time}', quiz_flipped=quiz_flipped)
     session.add(quiz_stat)
     session.commit()
 
 
-def add_quiz_activity_stat(quiz_id, user_id, quiz_uid, question, activityId):
+def add_quiz_activity_stat(quiz_id, user_id, quiz_uid, question, activityId, quiz_flipped):
     """ add a new quiz question stat for the user
 
         Args:
@@ -52,6 +53,7 @@ def add_quiz_activity_stat(quiz_id, user_id, quiz_uid, question, activityId):
             quiz_uid - uid of the current quiz being taken
             question - question to save state for
             activityId - See ActivityId enum
+            quiz_flipped - True if this is a flipped quiz, false otherwise
     """
     # special case for guest
     if user_id is None:
@@ -59,12 +61,12 @@ def add_quiz_activity_stat(quiz_id, user_id, quiz_uid, question, activityId):
 
     # add a new record
     session = Session()
-    quiz_activity = QuizActivity(quiz_id=quiz_id, user_id=user_id, quiz_uid=quiz_uid, key=question, value=0, stat_type=activityId.value)
+    quiz_activity = QuizActivity(quiz_id=quiz_id, user_id=user_id, quiz_uid=quiz_uid, key=question, value=0, stat_type=activityId.value, quiz_flipped=quiz_flipped)
     session.add(quiz_activity)
     session.commit()
 
 
-def add_quiz_question_stat(quiz_id, user_id, question, correct):
+def add_quiz_question_stat(quiz_id, user_id, question, correct, quiz_flipped):
     """ add a new quiz question stat for the user
 
         Args:
@@ -72,6 +74,7 @@ def add_quiz_question_stat(quiz_id, user_id, question, correct):
             user_id - id of the user to save the stat for
             question - question to save state for
             correct - True if correct, False if not
+            quiz_flipped - True if this is a flipped quiz, false otherwise
     """
     # special case for guest
     if user_id is None:
@@ -79,18 +82,18 @@ def add_quiz_question_stat(quiz_id, user_id, question, correct):
 
     # add a new record
     session = Session()
-    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_QUESTION', key=question, value=f'{1 if correct else 0}')
+    quiz_stat = QuizStat(quiz_id=quiz_id, user_id=user_id, stat_type='QUIZ_QUESTION', key=question, value=f'{1 if correct else 0}', quiz_flipped=quiz_flipped)
     session.add(quiz_stat)
     session.commit()
 
 
-def clearStatsForQuiz(quiz_id, user_id):
+def clearStatsForQuiz(quiz_id, user_id, quiz_flipped):
     """ handler for the Clear Stats For Quiz button.
 
         Remove stats for the given quiz / user
     """
     session = Session()
-    quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION')
+    quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION', quiz_flipped=quiz_flipped)
     quiz_stats.delete()
     session.commit()
 
@@ -123,10 +126,11 @@ def get_quiz_scores(user_id):
                 elapsed_time = '1 min'
         except:
             elapsed_time = ''
-            
+
         d = {}
         d = {'name': r.Quiz.name,
              'quiz_type': r.QuizStat.key,
+             'quiz_flipped': 'Flipped' if r.QuizStat.quiz_flipped else '',
              'time_created': r.QuizStat.time_created,
              'correct': int(r.QuizStat.value.partition(' ')[0].partition('/')[0]),
              'total': int(r.QuizStat.value.partition(' ')[0].partition('/')[2]),
@@ -141,7 +145,7 @@ def get_quiz_scores(user_id):
     return retval
 
 
-def get_quiz_question_stats(quiz_id, user_id):
+def get_quiz_question_stats(quiz_id, user_id, quiz_flipped):
     """ return scores for a quiz by a user
 
         Args:
@@ -157,7 +161,7 @@ def get_quiz_question_stats(quiz_id, user_id):
 
     # query for records
     session = Session()
-    quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION')
+    quiz_stats = session.query(QuizStat).filter(QuizStat.user_id == user_id, QuizStat.quiz_id == quiz_id, QuizStat.stat_type=='QUIZ_QUESTION', QuizStat.quiz_flipped==quiz_flipped)
     stats = {}
     for r in quiz_stats.all():
         if r.key not in stats:
@@ -254,6 +258,7 @@ class QuizStat(Base):
     quiz_stat_id = Column(Integer, primary_key=True)
     quiz_id = Column(Integer, ForeignKey("quiz.quiz_id"))
     user_id = Column(Integer, ForeignKey("users.user_id"))
+    quiz_flipped = Column(Boolean)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     stat_type = Column(String)
@@ -270,6 +275,7 @@ class QuizActivity(Base):
     quiz_id = Column(Integer, ForeignKey("quiz.quiz_id"))
     user_id = Column(Integer, ForeignKey("users.user_id"))
     quiz_uid = Column(Integer)
+    quiz_flipped = Column(Boolean)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     stat_type = Column(String)
@@ -285,3 +291,6 @@ class QuizActivity(Base):
 # --------------------------------------------------
 # create tables
 Base.metadata.create_all(engine)
+
+# ALTER TABLE quiz_activity ADD COLUMN quiz_flipped BOOLEAN NOT NULL DEFAULT 0;
+# ALTER TABLE quiz_stats ADD COLUMN quiz_flipped BOOLEAN NOT NULL DEFAULT 0;

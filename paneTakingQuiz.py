@@ -11,7 +11,6 @@ import sys
 import time
 import model
 import model_stats
-import random
 from utils import inject_quiz_id_user_id, refresh_activity_chart
 
 
@@ -55,6 +54,9 @@ def check_answer(jsc, quiz_id, user_id):
     else:
         correct = user_answer.strip().lower() == jsc.tag["QUESTIONS_REMAINING"][0][1].strip().lower()
 
+    # is the quiz flipped
+    quiz_flipped = jsc['#chkFlipQuiz'].prop.checked
+
     # handle correct or incorrect
     if correct:
         # answer is correct, so hide the alert
@@ -69,12 +71,12 @@ def check_answer(jsc, quiz_id, user_id):
             jsc.tag["CORRECT"] = jsc.tag["CORRECT"] + 1
 
             # update the stats
-            model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=True)
+            model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=True, quiz_flipped=quiz_flipped)
         else:
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] - 1
 
         # update activity stats
-        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], question, model_stats.ActivityId.QUIZ_QUESTION_CORRECT)                
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], question, model_stats.ActivityId.QUIZ_QUESTION_CORRECT, quiz_flipped=quiz_flipped)
     else:
         # answer is wrong, so show the alert
         jsc['#alert'].css.visibility = ''
@@ -90,14 +92,14 @@ def check_answer(jsc, quiz_id, user_id):
             jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
 
         # update the stats
-        model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=False)
+        model_stats.add_quiz_question_stat(quiz_id, user_id, question, correct=False, quiz_flipped=quiz_flipped)
 
         # add this question to the set of questions answered incorrectly
         jsc.tag["QUESTIONS_ANSWERED_INCORRECTLY"].add(question)
         jsc.tag["REMEDIAL"] = jsc.tag["REMEDIAL"] + 1
 
         # update activity stats
-        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], question, model_stats.ActivityId.QUIZ_QUESTION_INCORRECT)                
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], question, model_stats.ActivityId.QUIZ_QUESTION_INCORRECT, quiz_flipped=quiz_flipped)
 
     # refresh the progress bar
     refresh_progress_bar(jsc)
@@ -113,10 +115,10 @@ def check_answer(jsc, quiz_id, user_id):
 
         # update the stats
         elapsed_time = int(time.time() - jsc.tag["START_TIME"])
-        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'], elapsed_time)
-        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_END)        
+        model_stats.add_quiz_score(quiz_id, user_id, jsc.tag['QUIZ_TYPE'], jsc.tag['CORRECT'], jsc.tag['CORRECT'] + jsc.tag['WRONG'], elapsed_time, quiz_flipped=quiz_flipped)
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_END, quiz_flipped=quiz_flipped)
 
-    # refresh the activity chart    
+    # refresh the activity chart
     refresh_activity_chart(jsc, 'activitychart_taking', user_id)
 
 
@@ -165,16 +167,19 @@ def refresh_progress_bar(jsc):
 # --------------------------------------------------
 @inject_quiz_id_user_id
 def init_pane(jsc, quiz_id, user_id, **kwargs):
-    # init the activity chart    
+    # init the activity chart
     refresh_activity_chart(jsc, 'activitychart_taking', user_id)
-    
+
     # init a quiz_uid
     jsc.tag['QUIZ_UID'] = random.randint(0, sys.maxsize)
-    
+
     # show the questions and answer card
     jsc['#QuestionAndAnswer'].css.display = 'block'
     jsc['#QuestionsFinished'].css.display = 'none'
     jsc['#alert'].css.visibility = 'hidden'
+
+    # is the quiz flipped
+    quiz_flipped = jsc['#chkFlipQuiz'].prop.checked
 
     # get the selected quiz and the selected quiz data
     quiz = model.get_quiz(quiz_id)
@@ -183,6 +188,8 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
 
     # parse the quiz data
     lines = quiz_data.split('\n')
+    if quiz_flipped:
+        lines = [f'{x.split("|")[1]}|{x.split("|")[0]}' for x in lines]
 
     # chop for mini quiz
     jsc.tag['QUIZ_TYPE'] = ''
@@ -193,7 +200,7 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
             if not x.strip() == '':
                 data[x.split('|')[0].strip()] = x
 
-        quiz_stats = model_stats.get_quiz_question_stats(quiz_id, user_id)
+        quiz_stats = model_stats.get_quiz_question_stats(quiz_id, user_id, quiz_flipped)
 
         # find questions we have no stats for
         data_no_stats = dict(data)
@@ -243,9 +250,9 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
 
     # start the quiz stat
     if jsc.tag['QUIZ_TYPE'] == 'Mini':
-        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_START_MINI)
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_START_MINI, quiz_flipped)
     else:
-        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_START)
+        model_stats.add_quiz_activity_stat(quiz_id, user_id, jsc.tag['QUIZ_UID'], '', model_stats.ActivityId.QUIZ_START, quiz_flipped)
 
     # call next question to show the first question
     next_question(jsc)

@@ -44,11 +44,11 @@ def _validate_quiz_name(user_id, quiz_name):
 @inject_quiz_id_user_id
 def init_pane(jsc, quiz_id, user_id):
     """ called by the appSinglePageAppPlugin framework to handle initialization of this pane """
-    
-    # init the activity chart    
+
+    # init the activity chart
     refresh_activity_chart(jsc, 'activitychart_choose', user_id)
 
-    # get quiz info    
+    # get quiz info
     quiz_ids = model.get_quiz_ids(None)
     quizzes = model.get_quizzes(quiz_ids, ['name', 'owner_user_name', 'owner_user_id'])
 
@@ -215,8 +215,11 @@ def selectionChanged(jsc, quiz_id, user_id):
         jsc['#btn_Edit_Quiz'].html = 'View Quiz'
         jsc['#btn_Delete_Quiz'].prop.disabled = 'true'
 
+    # is the quiz flipped
+    quiz_flipped = jsc['#chkFlipQuiz'].prop.checked
+
     # update the stats
-    data = model_stats.get_quiz_question_stats(quiz_id, user_id)
+    data = model_stats.get_quiz_question_stats(quiz_id, user_id, quiz_flipped)
     date_handler = lambda obj: (
         obj.isoformat()
         if isinstance(obj, (datetime.datetime, datetime.date))
