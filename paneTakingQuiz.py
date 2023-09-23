@@ -189,7 +189,7 @@ def init_pane(jsc, quiz_id, user_id, **kwargs):
     # parse the quiz data
     lines = quiz_data.split('\n')
     if quiz_flipped:
-        lines = [f'{x.split("|")[1]}|{x.split("|")[0]}' for x in lines]
+        lines = [f'{x.split("|")[1]}|{x.split("|")[0]}' for x in lines if x.strip() != '']
 
     # chop for mini quiz
     jsc.tag['QUIZ_TYPE'] = ''
